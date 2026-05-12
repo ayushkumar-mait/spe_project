@@ -15,6 +15,13 @@ Open:
 http://localhost:8080
 ```
 
+Local demo login:
+
+```text
+Username: admin
+Password: admin
+```
+
 The local setup automatically creates a pipeline job:
 
 ```text
