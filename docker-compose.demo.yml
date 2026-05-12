@@ -1,0 +1,67 @@
+services:
+  redpanda:
+    image: docker.redpanda.com/redpandadata/redpanda:v24.3.1
+    command:
+      - redpanda
+      - start
+      - --overprovisioned
+      - --smp
+      - "1"
+      - --memory
+      - 512M
+      - --reserve-memory
+      - 0M
+      - --node-id
+      - "0"
+      - --check=false
+      - --kafka-addr
+      - PLAINTEXT://0.0.0.0:9092
+      - --advertise-kafka-addr
+      - PLAINTEXT://redpanda:9092
+    ports:
+      - "9092:9092"
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  job-api:
+    image: local/job-api:jenkins-local
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: redpanda:9092
+      JOB_TOPIC: jobs
+      REDIS_URL: redis://redis:6379/0
+      LOG_LEVEL: INFO
+    ports:
+      - "8000:8000"
+    depends_on:
+      - redpanda
+      - redis
+    restart: unless-stopped
+
+  worker:
+    image: local/job-worker:jenkins-local
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: redpanda:9092
+      JOB_TOPIC: jobs
+      REDIS_URL: redis://redis:6379/0
+      LOG_LEVEL: INFO
+    depends_on:
+      - redpanda
+      - redis
+    restart: unless-stopped
+
+  healing-controller:
+    image: local/healing-controller:jenkins-local
+    environment:
+      REDIS_URL: redis://redis:6379/0
+      LOG_LEVEL: INFO
+      HEALING_DRY_RUN: "true"
+      HEALING_INTERVAL_SECONDS: "10"
+      HEALING_QUEUED_THRESHOLD: "10"
+      HEALING_FAILED_THRESHOLD: "3"
+    depends_on:
+      - redis
+    restart: unless-stopped
+
