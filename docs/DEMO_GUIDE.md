@@ -142,6 +142,34 @@ Explain the roles:
 
 ## 9. Jenkins Demo
 
+Start local Jenkins:
+
+```bash
+./scripts/start-jenkins.sh
+```
+
+Open:
+
+```text
+http://localhost:8080
+```
+
+Run the seeded job:
+
+```text
+automated-chaos-platform
+```
+
+For a laptop-only run, keep:
+
+```text
+PUSH_IMAGES=false
+DEPLOY_TO_K8S=false
+```
+
+For the complete CI/CD run with Docker Hub and Kubernetes, set both values to
+`true` after adding the `dockerhub-creds` credential and Kubernetes context.
+
 Show the `Jenkinsfile` stages:
 
 1. Checkout from GitHub.
@@ -150,4 +178,3 @@ Show the `Jenkinsfile` stages:
 4. Push images to Docker Hub.
 5. Apply Kubernetes manifests.
 6. Set images and wait for rollout.
-

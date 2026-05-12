@@ -3,7 +3,7 @@
 | Evaluation Requirement | Implemented Artifact |
 | --- | --- |
 | Version control with Git/GitHub | Repository-ready structure, `.gitignore`, Jenkins GitHub trigger instructions |
-| Jenkins fetches and builds updated code | `Jenkinsfile` checkout and build stages |
+| Jenkins fetches and builds updated code | `Jenkinsfile` checkout/build stages and local Jenkins controller in `docker-compose.jenkins.yml` |
 | Automated tests | `pytest.ini`, tests for shared models, worker processor, and healing policy |
 | Docker images | Dockerfiles for Job API, Worker, and Healing Controller |
 | Push images to Docker Hub | `Jenkinsfile` Docker Hub push stage |
@@ -40,4 +40,3 @@ Innovation:
 
 - Run chaos experiment.
 - Show self-healing controller logs and Kubernetes recovery.
-

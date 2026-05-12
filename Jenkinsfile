@@ -14,6 +14,8 @@ pipeline {
     string(name: 'DOCKERHUB_ORG', defaultValue: 'your-dockerhub-username', description: 'Docker Hub namespace')
     string(name: 'IMAGE_TAG', defaultValue: 'dev', description: 'Image tag to build and deploy')
     string(name: 'K8S_NAMESPACE', defaultValue: 'job-platform', description: 'Target Kubernetes namespace')
+    booleanParam(name: 'PUSH_IMAGES', defaultValue: false, description: 'Push built images to Docker Hub')
+    booleanParam(name: 'DEPLOY_TO_K8S', defaultValue: false, description: 'Deploy images to Kubernetes')
   }
 
   environment {
@@ -31,7 +33,7 @@ pipeline {
 
     stage('Unit Tests') {
       steps {
-        sh 'python3 -m pip install -r requirements-dev.txt'
+        sh 'python3 -m pytest --version || python3 -m pip install -r requirements-dev.txt'
         sh 'python3 -m pytest'
       }
     }
@@ -45,6 +47,9 @@ pipeline {
     }
 
     stage('Push Images to Docker Hub') {
+      when {
+        expression { return params.PUSH_IMAGES }
+      }
       steps {
         withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
           sh 'echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin'
@@ -56,6 +61,9 @@ pipeline {
     }
 
     stage('Deploy to Kubernetes') {
+      when {
+        expression { return params.DEPLOY_TO_K8S }
+      }
       steps {
         sh 'kubectl apply -k k8s/base'
         sh 'kubectl -n "$K8S_NAMESPACE" set image deployment/job-api job-api="$JOB_API_IMAGE"'
@@ -70,6 +78,7 @@ pipeline {
 
   post {
     always {
+      sh 'docker images | grep -E "job-api|job-worker|healing-controller" || true'
       sh 'kubectl -n "$K8S_NAMESPACE" get deploy,pod,svc,hpa || true'
     }
   }

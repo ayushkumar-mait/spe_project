@@ -1,0 +1,7 @@
+jenkins:
+  systemMessage: "Local Jenkins controller for the Automated Chaos Testing and Self-Healing Microservices Platform."
+  numExecutors: 2
+  mode: NORMAL
+unclassified:
+  location:
+    url: "http://localhost:8080/"
