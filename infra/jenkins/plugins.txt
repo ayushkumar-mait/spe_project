@@ -6,5 +6,5 @@ git
 github
 github-branch-source
 pipeline-stage-view
+timestamper
 workflow-aggregator
-
