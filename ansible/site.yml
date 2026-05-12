@@ -1,0 +1,9 @@
+- name: Deploy automated chaos testing platform
+  hosts: localhost
+  gather_facts: false
+  roles:
+    - k8s-role
+    - app-role
+    - monitoring-role
+    - vault-role
+

@@ -1,0 +1,14 @@
+- name: Show Vault setup command
+  ansible.builtin.debug:
+    msg: "Run ./vault/scripts/bootstrap-vault.sh after Vault and the Vault injector are installed."
+
+- name: Confirm Vault policy file exists
+  ansible.builtin.stat:
+    path: "{{ playbook_dir }}/../vault/policies/job-platform.hcl"
+  register: vault_policy
+
+- name: Fail when Vault policy is missing
+  ansible.builtin.fail:
+    msg: "Vault policy file is missing."
+  when: not vault_policy.stat.exists
+

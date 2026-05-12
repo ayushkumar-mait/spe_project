@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: job-worker
+  namespace: job-platform
+  labels:
+    app: job-worker
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app: job-worker
+  template:
+    metadata:
+      labels:
+        app: job-worker
+      annotations:
+        vault.hashicorp.com/agent-inject: "true"
+        vault.hashicorp.com/role: job-platform
+        vault.hashicorp.com/agent-inject-secret-platform.env: secret/data/job-platform
+        vault.hashicorp.com/agent-inject-template-platform.env: |
+          {{- with secret "secret/data/job-platform" -}}
+          API_TOKEN={{ .Data.data.api_token }}
+          REDIS_PASSWORD={{ .Data.data.redis_password }}
+          {{- end -}}
+    spec:
+      containers:
+        - name: worker
+          image: your-dockerhub-username/job-worker:dev
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+              name: health
+          envFrom:
+            - configMapRef:
+                name: platform-config
+          resources:
+            requests:
+              cpu: 150m
+              memory: 128Mi
+            limits:
+              cpu: 800m
+              memory: 512Mi
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: health
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: health
+            initialDelaySeconds: 20
+            periodSeconds: 20
+

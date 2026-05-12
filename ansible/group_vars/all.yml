@@ -1,0 +1,8 @@
+namespace: job-platform
+k8s_context: ""
+dockerhub_org: your-dockerhub-username
+image_tag: dev
+job_api_image: "{{ dockerhub_org }}/job-api:{{ image_tag }}"
+worker_image: "{{ dockerhub_org }}/job-worker:{{ image_tag }}"
+healing_image: "{{ dockerhub_org }}/healing-controller:{{ image_tag }}"
+

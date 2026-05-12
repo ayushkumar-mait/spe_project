@@ -1,0 +1,26 @@
+apiVersion: litmuschaos.io/v1alpha1
+kind: ChaosEngine
+metadata:
+  name: worker-cpu-stress
+  namespace: job-platform
+spec:
+  appinfo:
+    appns: job-platform
+    applabel: app=job-worker
+    appkind: deployment
+  chaosServiceAccount: litmus-admin
+  engineState: active
+  annotationCheck: "false"
+  jobCleanUpPolicy: retain
+  experiments:
+    - name: pod-cpu-hog
+      spec:
+        components:
+          env:
+            - name: TOTAL_CHAOS_DURATION
+              value: "90"
+            - name: CPU_CORES
+              value: "1"
+            - name: PODS_AFFECTED_PERC
+              value: "50"
+

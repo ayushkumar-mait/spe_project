@@ -1,0 +1,28 @@
+apiVersion: litmuschaos.io/v1alpha1
+kind: ChaosEngine
+metadata:
+  name: worker-pod-delete
+  namespace: job-platform
+spec:
+  appinfo:
+    appns: job-platform
+    applabel: app=job-worker
+    appkind: deployment
+  chaosServiceAccount: litmus-admin
+  engineState: active
+  annotationCheck: "false"
+  jobCleanUpPolicy: retain
+  experiments:
+    - name: pod-delete
+      spec:
+        components:
+          env:
+            - name: TOTAL_CHAOS_DURATION
+              value: "60"
+            - name: CHAOS_INTERVAL
+              value: "15"
+            - name: FORCE
+              value: "false"
+            - name: PODS_AFFECTED_PERC
+              value: "50"
+

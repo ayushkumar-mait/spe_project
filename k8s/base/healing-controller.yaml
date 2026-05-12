@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: healing-controller
+  namespace: job-platform
+  labels:
+    app: healing-controller
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: healing-controller
+  template:
+    metadata:
+      labels:
+        app: healing-controller
+      annotations:
+        vault.hashicorp.com/agent-inject: "true"
+        vault.hashicorp.com/role: job-platform
+        vault.hashicorp.com/agent-inject-secret-platform.env: secret/data/job-platform
+        vault.hashicorp.com/agent-inject-template-platform.env: |
+          {{- with secret "secret/data/job-platform" -}}
+          API_TOKEN={{ .Data.data.api_token }}
+          REDIS_PASSWORD={{ .Data.data.redis_password }}
+          {{- end -}}
+    spec:
+      serviceAccountName: healing-controller
+      containers:
+        - name: healing-controller
+          image: your-dockerhub-username/healing-controller:dev
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef:
+                name: platform-config
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi
+

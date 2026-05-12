@@ -1,0 +1,21 @@
+- name: Show active Kubernetes context
+  ansible.builtin.command: kubectl config current-context
+  register: current_context
+  changed_when: false
+
+- name: Apply base Kubernetes infrastructure
+  ansible.builtin.command: kubectl apply -k ../k8s/base
+  args:
+    chdir: "{{ playbook_dir }}"
+  changed_when: true
+
+- name: Wait for platform deployments
+  ansible.builtin.command: kubectl -n {{ namespace }} rollout status deployment/{{ item }} --timeout=180s
+  loop:
+    - redpanda
+    - redis
+    - job-api
+    - job-worker
+    - healing-controller
+  changed_when: false
+

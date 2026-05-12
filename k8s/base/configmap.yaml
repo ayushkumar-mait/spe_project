@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: platform-config
+  namespace: job-platform
+data:
+  KAFKA_BOOTSTRAP_SERVERS: redpanda.job-platform.svc.cluster.local:9092
+  JOB_TOPIC: jobs
+  REDIS_URL: redis://redis.job-platform.svc.cluster.local:6379/0
+  LOG_LEVEL: INFO
+  TARGET_NAMESPACE: job-platform
+  WORKER_DEPLOYMENT: job-worker
+  HEALING_INTERVAL_SECONDS: "15"
+  HEALING_QUEUED_THRESHOLD: "10"
+  HEALING_FAILED_THRESHOLD: "5"
+  HEALING_MIN_REPLICAS: "1"
+  HEALING_MAX_REPLICAS: "8"
+  HEALING_SCALE_STEP: "1"
+
