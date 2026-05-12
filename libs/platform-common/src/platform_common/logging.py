@@ -24,6 +24,13 @@ class JsonFormatter(logging.Formatter):
         return json.dumps(payload, default=str, separators=(",", ":"))
 
 
+class ContextMergingLoggerAdapter(logging.LoggerAdapter):
+    def process(self, msg: Any, kwargs: dict[str, Any]) -> tuple[Any, dict[str, Any]]:
+        message_extra = kwargs.get("extra", {})
+        kwargs["extra"] = {**self.extra, **message_extra}
+        return msg, kwargs
+
+
 _RESERVED_LOG_RECORD_KEYS = {
     "args",
     "asctime",
@@ -60,6 +67,4 @@ def configure_json_logging(service_name: str, level: str = "INFO") -> logging.Lo
     root.setLevel(level.upper())
 
     logger = logging.getLogger(service_name)
-    logger = logging.LoggerAdapter(logger, {"service": service_name})  # type: ignore[assignment]
-    return logger  # type: ignore[return-value]
-
+    return ContextMergingLoggerAdapter(logger, {"service": service_name})  # type: ignore[return-value]
