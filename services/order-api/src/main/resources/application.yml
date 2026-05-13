@@ -1,0 +1,21 @@
+server:
+  port: 8000
+
+spring:
+  application:
+    name: order-api
+  data:
+    redis:
+      url: ${REDIS_URL:redis://localhost:6379/0}
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+
+springdoc:
+  swagger-ui:
+    path: /docs
+
+platform:
+  job-topic: ${JOB_TOPIC:jobs}

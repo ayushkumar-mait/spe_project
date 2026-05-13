@@ -11,6 +11,7 @@ RUN apt-get update \
       python3 \
       python3-pip \
       python3-pytest \
+      maven \
       docker-cli \
       docker.io \
     && curl -fsSL "https://dl.k8s.io/release/v1.31.0/bin/linux/arm64/kubectl" -o /usr/local/bin/kubectl \

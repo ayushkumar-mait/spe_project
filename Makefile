@@ -7,6 +7,7 @@ IMAGE_TAG ?= dev
 
 test:
 	python3 -m pytest
+	mvn -q -f services/order-api/pom.xml test
 
 compose-up:
 	docker compose up --build --scale worker=3
@@ -15,7 +16,7 @@ compose-down:
 	docker compose down -v
 
 build:
-	docker build -f services/job-api/Dockerfile -t $(DOCKERHUB_ORG)/job-api:$(IMAGE_TAG) .
+	docker build -f services/order-api/Dockerfile -t $(DOCKERHUB_ORG)/order-api:$(IMAGE_TAG) .
 	docker build -f services/worker/Dockerfile -t $(DOCKERHUB_ORG)/job-worker:$(IMAGE_TAG) .
 	docker build -f services/healing-controller/Dockerfile -t $(DOCKERHUB_ORG)/healing-controller:$(IMAGE_TAG) .
 
@@ -33,4 +34,3 @@ chaos-pod-delete:
 
 rolling-update:
 	./scripts/rolling-update-demo.sh $(NAMESPACE) $(DOCKERHUB_ORG)/job-worker:$(IMAGE_TAG)
-

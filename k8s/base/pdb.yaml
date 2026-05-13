@@ -1,13 +1,13 @@
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
-  name: job-api-pdb
+  name: order-api-pdb
   namespace: job-platform
 spec:
   minAvailable: 1
   selector:
     matchLabels:
-      app: job-api
+      app: order-api
 ---
 apiVersion: policy/v1
 kind: PodDisruptionBudget
@@ -19,4 +19,3 @@ spec:
   selector:
     matchLabels:
       app: job-worker
-

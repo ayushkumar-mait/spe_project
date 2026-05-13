@@ -3,8 +3,8 @@ kind: Kustomization
 resources:
   - ../../base
 images:
-  - name: your-dockerhub-username/job-api
-    newName: your-dockerhub-username/job-api
+  - name: your-dockerhub-username/order-api
+    newName: your-dockerhub-username/order-api
     newTag: dev
   - name: your-dockerhub-username/job-worker
     newName: your-dockerhub-username/job-worker
@@ -12,4 +12,3 @@ images:
   - name: your-dockerhub-username/healing-controller
     newName: your-dockerhub-username/healing-controller
     newTag: dev
-

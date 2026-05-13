@@ -5,12 +5,13 @@
 ```bash
 cd automated-chaos-testing-self-healing-microservices-platform
 python3 -m pytest
+mvn -f services/order-api/pom.xml test
 ```
 
 Explain that these tests validate:
 
-- job model and Redis repository behavior
-- worker job processing logic
+- order/job model and Redis repository behavior
+- worker delivery-order processing logic
 - self-healing decision policy
 
 ## 2. Docker Compose Demo
@@ -42,7 +43,7 @@ job-platform-logs-*
 Search:
 
 ```text
-app.event: job_submitted OR app.event: job_processing_completed
+order_submitted OR job_processing_completed
 ```
 
 ## 3. Kubernetes Deployment
@@ -50,7 +51,7 @@ app.event: job_submitted OR app.event: job_processing_completed
 ```bash
 kubectl apply -k k8s/base
 kubectl -n job-platform get deploy,pod,svc,hpa
-kubectl -n job-platform port-forward svc/job-api 8000:8000
+kubectl -n job-platform port-forward svc/order-api 8000:8000
 ```
 
 Generate load:
@@ -71,7 +72,7 @@ kubectl -n observability port-forward svc/kibana 5601:5601
 Use Kibana to visualize:
 
 - logs by service
-- job submissions
+- delivery order submissions
 - processing failures
 - healing actions
 
@@ -99,13 +100,13 @@ kubectl -n job-platform get hpa -w
 
 ## 6. Self-Healing Demo Without Litmus
 
-Submit flaky jobs:
+Submit delivery orders that intentionally fail:
 
 ```bash
 for i in $(seq 1 20); do
-  curl -s -X POST http://localhost:8000/submit-job \
+  curl -s -X POST http://localhost:8000/orders \
     -H "Content-Type: application/json" \
-    -d '{"job_type":"flaky","payload":{"failure_rate":0.8,"seconds":0.1},"priority":8}'
+    -d '{"customerName":"Chaos Customer","restaurantName":"Failure Kitchen","pickupAddress":"Block A","deliveryAddress":"Hostel Gate","items":["Test Order"],"priority":8,"estimatedDistanceKm":1.5,"simulateSeconds":1,"forceFail":true}'
 done
 ```
 
@@ -173,7 +174,7 @@ For the complete CI/CD run with Docker Hub and Kubernetes, set both values to
 Show the `Jenkinsfile` stages:
 
 1. Checkout from GitHub.
-2. Run unit tests.
+2. Run Python and Spring Boot unit tests.
 3. Build Docker images.
 4. Push images to Docker Hub.
 5. Apply Kubernetes manifests.

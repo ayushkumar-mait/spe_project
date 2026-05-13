@@ -8,17 +8,30 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from urllib import request
 
 
-def submit_job(base_url: str, index: int) -> dict:
-    job_type = random.choice(["sleep", "cpu", "report", "flaky"])
-    payload = {
-        "sleep": {"seconds": random.uniform(0.2, 2.0)},
-        "cpu": {"iterations": random.randint(50_000, 300_000)},
-        "report": {"text": f"job {index} chaos platform worker worker", "delay_seconds": 0.3},
-        "flaky": {"failure_rate": 0.15, "seconds": 0.2},
-    }[job_type]
-    body = json.dumps({"job_type": job_type, "payload": payload, "priority": random.randint(1, 10)}).encode("utf-8")
+def submit_order(base_url: str, index: int) -> dict:
+    restaurants = ["Campus Canteen", "Metro Biryani", "Green Bowl", "Pizza Corner"]
+    addresses = ["Hostel Gate", "Library Block", "Main Auditorium", "Lab Complex"]
+    items = [
+        ["Paneer Roll", "Cold Coffee"],
+        ["Veg Biryani", "Raita"],
+        ["Rice Bowl", "Lassi"],
+        ["Margherita Pizza", "Iced Tea"],
+    ]
+    selection = random.randrange(len(restaurants))
+    body = json.dumps(
+        {
+            "customerName": f"Customer {index}",
+            "restaurantName": restaurants[selection],
+            "pickupAddress": f"{restaurants[selection]} Pickup Counter",
+            "deliveryAddress": random.choice(addresses),
+            "items": items[selection],
+            "priority": random.randint(1, 10),
+            "estimatedDistanceKm": round(random.uniform(0.5, 8.0), 2),
+            "simulateSeconds": random.randint(1, 4),
+        }
+    ).encode("utf-8")
     req = request.Request(
-        f"{base_url.rstrip('/')}/submit-job",
+        f"{base_url.rstrip('/')}/orders",
         data=body,
         headers={"Content-Type": "application/json"},
         method="POST",
@@ -31,23 +44,22 @@ def submit_job(base_url: str, index: int) -> dict:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Generate load against the Job API service.")
-    parser.add_argument("--url", default="http://localhost:8000", help="Job API base URL")
-    parser.add_argument("--jobs", type=int, default=25, help="Number of jobs to submit")
+    parser = argparse.ArgumentParser(description="Generate delivery order load against the Order API service.")
+    parser.add_argument("--url", default="http://localhost:8000", help="Order API base URL")
+    parser.add_argument("--jobs", type=int, default=25, help="Number of delivery orders to submit")
     parser.add_argument("--concurrency", type=int, default=5, help="Concurrent submitters")
     args = parser.parse_args()
 
     submitted = []
     with ThreadPoolExecutor(max_workers=args.concurrency) as executor:
-        futures = [executor.submit(submit_job, args.url, index) for index in range(args.jobs)]
+        futures = [executor.submit(submit_order, args.url, index) for index in range(args.jobs)]
         for future in as_completed(futures):
             result = future.result()
             submitted.append(result)
             print(json.dumps(result))
 
-    print(json.dumps({"submitted": len(submitted), "api_url": args.url}))
+    print(json.dumps({"submitted_orders": len(submitted), "api_url": args.url}))
 
 
 if __name__ == "__main__":
     main()
-

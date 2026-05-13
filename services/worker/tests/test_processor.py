@@ -28,3 +28,26 @@ def test_flaky_job_can_be_forced_to_fail():
     with pytest.raises(RuntimeError):
         process_job(job, sleeper=lambda _seconds: None, random_fn=lambda: 0.1)
 
+
+def test_delivery_order_returns_dispatch_result_without_real_sleep():
+    job = build_job(
+        "delivery_order",
+        {
+            "order_id": "order-1",
+            "customer_name": "Ayush",
+            "restaurant_name": "Campus Canteen",
+            "pickup_address": "Block A",
+            "delivery_address": "Hostel Gate",
+            "items": ["Paneer Roll", "Cold Coffee"],
+            "estimated_distance_km": 2.5,
+            "simulate_seconds": 5,
+        },
+        job_id="order-1",
+    )
+
+    result = process_job(job, sleeper=lambda _seconds: None)
+
+    assert result["order_id"] == "order-1"
+    assert result["order_status"] == "ready_for_dispatch"
+    assert result["items_count"] == 2
+    assert "rider_assigned" in result["processed_steps"]

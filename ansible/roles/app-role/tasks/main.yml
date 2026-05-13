@@ -1,5 +1,5 @@
-- name: Update Job API image
-  ansible.builtin.command: kubectl -n {{ namespace }} set image deployment/job-api job-api={{ job_api_image }}
+- name: Update Order API image
+  ansible.builtin.command: kubectl -n {{ namespace }} set image deployment/order-api order-api={{ order_api_image }}
   changed_when: true
 
 - name: Update worker image
@@ -13,8 +13,7 @@
 - name: Wait for rolling updates
   ansible.builtin.command: kubectl -n {{ namespace }} rollout status deployment/{{ item }} --timeout=180s
   loop:
-    - job-api
+    - order-api
     - job-worker
     - healing-controller
   changed_when: false
-

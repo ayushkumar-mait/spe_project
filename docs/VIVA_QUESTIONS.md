@@ -2,14 +2,14 @@
 
 ## What is the application layer in this project?
 
-It is a distributed job processing system. Users submit jobs through the Job API,
-jobs are placed into a Kafka-compatible queue, and worker pods process them
-asynchronously.
+It is a delivery order processing system. Customers place orders through the
+Spring Boot Order API, order-processing tasks are placed into a Kafka-compatible
+queue, and worker pods process them asynchronously.
 
 ## Why is this suitable for chaos engineering?
 
 The system naturally has failure points: API, queue, workers, Redis, and network
-communication. Worker deletion, CPU stress, queue backlog, and network delay are
+communication. Worker deletion, CPU stress, order backlog, and network delay are
 realistic failures for this architecture.
 
 ## What happens if a worker pod crashes?
@@ -28,12 +28,12 @@ There are two levels:
 
 ## Why use Kafka or Redpanda?
 
-It decouples job submission from job processing. The API remains responsive even
+It decouples order submission from background processing. The API remains responsive even
 when workers are slow or temporarily unavailable.
 
 ## Why use Redis?
 
-Kafka stores the stream of jobs, while Redis stores queryable job status and
+Kafka stores the stream of order-processing tasks, while Redis stores queryable order status and
 recent metrics for the API and healing controller.
 
 ## How does Jenkins automate SDLC?
@@ -70,4 +70,3 @@ without hardcoding them in YAML or source code.
 The project combines chaos experiments with a custom healing loop. It does not
 only deploy microservices; it observes failures and automatically changes the
 runtime state to recover.
-

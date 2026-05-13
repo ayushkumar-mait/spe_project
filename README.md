@@ -1,18 +1,19 @@
 # Automated Chaos Testing and Self-Healing Microservices Platform
 
 This project implements a DevOps pipeline and cloud-native runtime for a
-distributed job processing system. Users submit jobs through a REST API, jobs are
-queued in Kafka/Redpanda, worker pods process them asynchronously, logs flow into
-ELK, LitmusChaos injects failures, and Kubernetes plus a custom healing
-controller recover the system automatically.
+delivery order processing system. Customers place delivery orders through a
+Spring Boot REST API, order-processing tasks are queued in Kafka/Redpanda,
+worker pods process them asynchronously, logs flow into ELK, LitmusChaos injects
+failures, and Kubernetes plus a custom healing controller recover the system
+automatically.
 
 ## Application Layer
 
 ```mermaid
 flowchart LR
-    U["User / Load Generator"] --> A["Job API Service"]
+    U["Customer / Load Generator"] --> A["Spring Boot Order API"]
     A --> K["Kafka-compatible Queue (Redpanda)"]
-    A --> R["Redis Job Status Store"]
+    A --> R["Redis Order Status Store"]
     K --> W1["Worker Pod 1"]
     K --> W2["Worker Pod 2"]
     K --> WN["Worker Pod N"]
@@ -43,7 +44,7 @@ flowchart LR
 ## Repository Layout
 
 ```text
-services/job-api/              FastAPI producer service
+services/order-api/            Spring Boot delivery order producer service
 services/worker/               Kafka consumer and job processor
 services/healing-controller/   Custom self-healing controller
 libs/platform-common/          Shared models, logging, Redis repository, queue client
@@ -67,9 +68,9 @@ docker compose up --build --scale worker=3
 In another terminal:
 
 ```bash
-curl -X POST http://localhost:8000/submit-job \
+curl -X POST http://localhost:8000/orders \
   -H "Content-Type: application/json" \
-  -d '{"job_type":"cpu","payload":{"iterations":200000},"priority":5}'
+  -d '{"customerName":"Ayush","restaurantName":"Campus Canteen","pickupAddress":"Block A","deliveryAddress":"Hostel Gate","items":["Paneer Roll","Cold Coffee"],"priority":5,"estimatedDistanceKm":2.5,"simulateSeconds":2}'
 
 python3 tools/load-generator/load_generator.py --jobs 50 --concurrency 10
 curl http://localhost:8000/metrics
@@ -95,7 +96,7 @@ Build and push images first:
 export DOCKERHUB_ORG=your-dockerhub-username
 export IMAGE_TAG=dev
 make build
-docker push "$DOCKERHUB_ORG/job-api:$IMAGE_TAG"
+docker push "$DOCKERHUB_ORG/order-api:$IMAGE_TAG"
 docker push "$DOCKERHUB_ORG/job-worker:$IMAGE_TAG"
 docker push "$DOCKERHUB_ORG/healing-controller:$IMAGE_TAG"
 ```
@@ -104,7 +105,7 @@ Deploy:
 
 ```bash
 kubectl apply -k k8s/base
-kubectl -n job-platform port-forward svc/job-api 8000:8000
+kubectl -n job-platform port-forward svc/order-api 8000:8000
 ```
 
 Generate load:

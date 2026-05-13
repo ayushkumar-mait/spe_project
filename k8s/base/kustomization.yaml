@@ -6,9 +6,8 @@ resources:
   - redpanda.yaml
   - redis.yaml
   - rbac.yaml
-  - job-api.yaml
+  - order-api.yaml
   - worker.yaml
   - healing-controller.yaml
   - hpa.yaml
   - pdb.yaml
-

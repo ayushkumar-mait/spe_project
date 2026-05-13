@@ -8,4 +8,3 @@ echo
 python3 tools/load-generator/load_generator.py --url "$BASE_URL" --jobs 10 --concurrency 3
 curl -fsS "$BASE_URL/metrics"
 echo
-

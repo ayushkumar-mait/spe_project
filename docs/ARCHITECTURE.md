@@ -13,9 +13,9 @@ flowchart TB
     end
 
     subgraph K8S["Kubernetes Cluster"]
-        API["Job API Deployment"]
+        API["Spring Boot Order API Deployment"]
         Q["Redpanda / Kafka Queue"]
-        REDIS["Redis Job Store"]
+        REDIS["Redis Order/Job Store"]
         WORKER["Worker Deployment"]
         HPA["Horizontal Pod Autoscaler"]
         HEAL["Self-Healing Controller"]
@@ -40,10 +40,10 @@ flowchart TB
 
 ## Runtime Flow
 
-1. A client sends `POST /submit-job`.
-2. Job API creates a job ID, stores status in Redis, and publishes the job to
-   Kafka/Redpanda.
-3. Worker pods consume jobs from the queue and update Redis with `running`,
+1. A customer or load generator sends `POST /orders`.
+2. The Spring Boot Order API creates an order ID, stores status in Redis, and
+   publishes a `delivery_order` task to Kafka/Redpanda.
+3. Worker pods consume delivery-order tasks from the queue and update Redis with `running`,
    `completed`, or `failed`.
 4. Logs are emitted as JSON and collected by ELK.
 5. LitmusChaos injects pod deletion, CPU pressure, or network delay.
@@ -57,15 +57,15 @@ flowchart TB
 The controller evaluates this state every `HEALING_INTERVAL_SECONDS`:
 
 ```text
-queued jobs + running jobs = backlog
-failed jobs = failure count
+queued orders + running orders = backlog
+failed orders = failure count
 current replicas = worker deployment replica count
 ```
 
 Actions:
 
 - Backlog above `HEALING_QUEUED_THRESHOLD`: scale worker replicas upward.
-- Failed jobs above `HEALING_FAILED_THRESHOLD`: trigger a rolling restart.
+- Failed orders above `HEALING_FAILED_THRESHOLD`: trigger a rolling restart.
 - Backlog cleared: scale workers back to `HEALING_MIN_REPLICAS`.
 
 Kubernetes also provides built-in recovery:
@@ -82,6 +82,5 @@ Kubernetes also provides built-in recovery:
 | Worker pod deleted | Litmus `pod-delete` | Deployment recreates pod |
 | Worker CPU stress | Litmus `pod-cpu-hog` | HPA increases replicas |
 | Network delay | Litmus `pod-network-latency` | Queue buffers jobs; workers resume |
-| Many failed jobs | Flaky job payloads | Healing controller restarts workers |
-| High job backlog | Load generator | Healing controller and HPA scale workers |
-
+| Many failed orders | Delivery orders with `forceFail=true` | Healing controller restarts workers |
+| High order backlog | Load generator | Healing controller and HPA scale workers |

@@ -1,2 +1,1 @@
-"""Kafka worker service for distributed job processing."""
-
+"""Kafka worker service for delivery order processing."""

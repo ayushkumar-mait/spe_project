@@ -26,8 +26,8 @@ services:
     ports:
       - "6379:6379"
 
-  job-api:
-    image: local/job-api:jenkins-local
+  order-api:
+    image: local/order-api:jenkins-local
     environment:
       KAFKA_BOOTSTRAP_SERVERS: redpanda:9092
       JOB_TOPIC: jobs
@@ -64,4 +64,3 @@ services:
     depends_on:
       - redis
     restart: unless-stopped
-

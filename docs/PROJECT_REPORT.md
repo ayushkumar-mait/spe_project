@@ -14,7 +14,7 @@ Modern microservice systems must remain available during frequent deployments,
 load spikes, infrastructure failures, and network instability. Manual deployment
 and manual recovery are slow and error-prone. This project designs and implements
 an automated DevOps framework that builds, tests, deploys, monitors, breaks, and
-self-heals a distributed job processing application.
+self-heals a delivery order processing application.
 
 ## Objectives
 
@@ -28,17 +28,17 @@ self-heals a distributed job processing application.
 
 ## Application Overview
 
-The application is a distributed job processing system:
+The application is a delivery order processing system:
 
-- Job API accepts user job requests.
-- Redpanda provides a Kafka-compatible job queue.
-- Worker pods process jobs asynchronously.
+- Spring Boot Order API accepts customer delivery orders.
+- Redpanda provides a Kafka-compatible order-processing queue.
+- Worker pods process delivery-order tasks asynchronously.
 - Redis stores job status and metrics.
 - Healing Controller observes Redis metrics and acts through the Kubernetes API.
 
 ## Methodology
 
-1. Develop Python microservices with structured logging.
+1. Develop a Spring Boot Order API plus Python worker/healing microservices with structured logging.
 2. Containerize services using Docker.
 3. Use Docker Compose for local integration testing.
 4. Create Kubernetes manifests for deployments, services, HPA, RBAC, and PDB.
@@ -53,7 +53,7 @@ The Jenkins pipeline contains these stages:
 
 1. Checkout from GitHub.
 2. Run automated unit tests.
-3. Build Docker images for API, worker, and healing controller.
+3. Build Docker images for Order API, worker, and healing controller.
 4. Push images to Docker Hub.
 5. Apply Kubernetes manifests.
 6. Update Kubernetes deployments with new images.
@@ -70,9 +70,9 @@ The following chaos experiments are included:
 
 ## Monitoring and Logging
 
-Each service writes JSON logs with fields such as service name, event name, job
-ID, trace ID, status, and error details. Logstash parses these logs and forwards
-them to Elasticsearch. Kibana dashboards can show job submissions, failures,
+Each service writes structured logs with fields such as service name, event name,
+order ID, trace ID, status, and error details. Logstash parses these logs and forwards
+them to Elasticsearch. Kibana dashboards can show order submissions, failures,
 completion trends, and healing actions.
 
 ## Self-Healing Design
@@ -104,7 +104,7 @@ the injected file during startup, avoiding hardcoded credentials.
 
 ## Expected Results
 
-- Jobs are accepted and processed asynchronously.
+- Delivery orders are accepted and processed asynchronously.
 - Jenkins automates testing, image creation, image push, and Kubernetes rollout.
 - Logs appear in Elasticsearch and can be visualized in Kibana.
 - Worker pod deletion is recovered by Kubernetes.
@@ -119,4 +119,3 @@ the injected file during startup, avoiding hardcoded credentials.
 - Add canary deployment using Argo Rollouts or Flagger.
 - Add queue lag based autoscaling using KEDA.
 - Add OpenTelemetry tracing across API, queue, and workers.
-

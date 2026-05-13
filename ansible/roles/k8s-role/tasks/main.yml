@@ -14,8 +14,7 @@
   loop:
     - redpanda
     - redis
-    - job-api
+    - order-api
     - job-worker
     - healing-controller
   changed_when: false
-

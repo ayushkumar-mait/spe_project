@@ -40,6 +40,26 @@ def process_job(
         sleeper(min(float(payload.get("delay_seconds", 1)), 10.0))
         return {"word_count": len(words), "top_terms": counts.most_common(5)}
 
+    if job.job_type == "delivery_order":
+        seconds = min(float(payload.get("simulate_seconds", 2)), 30.0)
+        distance_km = max(float(payload.get("estimated_distance_km", 3.0)), 0.1)
+        items = payload.get("items", [])
+        sleeper(seconds)
+        return {
+            "order_id": payload.get("order_id", job.job_id),
+            "order_status": "ready_for_dispatch",
+            "assigned_rider": _select_rider(job.job_id),
+            "estimated_delivery_minutes": int(12 + distance_km * 4),
+            "items_count": len(items) if isinstance(items, list) else 0,
+            "processed_steps": [
+                "payment_verified",
+                "restaurant_confirmed",
+                "rider_assigned",
+                "route_calculated",
+                "customer_notified",
+            ],
+        }
+
     if job.job_type == "flaky":
         failure_rate = min(max(float(payload.get("failure_rate", 0.3)), 0.0), 1.0)
         sleeper(min(float(payload.get("seconds", 1)), 10.0))
@@ -50,3 +70,7 @@ def process_job(
     sleeper(min(float(payload.get("seconds", 1)), 10.0))
     return {"echo": payload, "job_type": job.job_type}
 
+
+def _select_rider(job_id: str) -> str:
+    riders = ["Rider-Asha", "Rider-Rahul", "Rider-Neha", "Rider-Arjun"]
+    return riders[sum(ord(char) for char in job_id) % len(riders)]

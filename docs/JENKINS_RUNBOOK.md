@@ -54,6 +54,7 @@ Type: Username with password
 docker version
 kubectl config current-context
 python3 -m pytest
+mvn -f services/order-api/pom.xml test
 ```
 
 4. Configure the GitHub repository webhook:
@@ -82,8 +83,8 @@ ready.
 The `Jenkinsfile` controls the full CI/CD process:
 
 1. Checkout from GitHub or local SCM.
-2. Install test dependency and run unit tests.
-3. Build service Docker images.
+2. Run Python tests and Spring Boot Order API tests.
+3. Build service Docker images, including `order-api`.
 4. Push images to Docker Hub.
 5. Deploy manifests to Kubernetes.
 6. Update running deployments with new images.

@@ -11,6 +11,7 @@ venv/
 !.env.example
 dist/
 build/
+target/
 *.egg-info/
 coverage.xml
 .coverage
@@ -18,4 +19,3 @@ htmlcov/
 logs/
 tmp/
 node_modules/
-

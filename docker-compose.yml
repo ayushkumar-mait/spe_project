@@ -69,10 +69,10 @@ services:
     ports:
       - "8200:8200"
 
-  job-api:
+  order-api:
     build:
       context: .
-      dockerfile: services/job-api/Dockerfile
+      dockerfile: services/order-api/Dockerfile
     environment:
       KAFKA_BOOTSTRAP_SERVERS: redpanda:9092
       JOB_TOPIC: jobs
@@ -89,7 +89,7 @@ services:
       driver: gelf
       options:
         gelf-address: udp://localhost:12201
-        tag: job-api
+        tag: order-api
 
   worker:
     build:

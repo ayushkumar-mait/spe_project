@@ -1,7 +1,7 @@
 # Presentation Outline
 
 1. Title and problem statement
-2. Why distributed job processing is the application layer
+2. Why delivery order processing is the application layer
 3. Architecture diagram and component explanation
 4. CI/CD pipeline flow from GitHub to Kubernetes
 5. Docker and Docker Compose local execution
@@ -12,4 +12,3 @@
 10. Security with Vault and modular deployment with Ansible
 11. Demo results and screenshots
 12. Conclusion and future scope
-

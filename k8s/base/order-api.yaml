@@ -1,10 +1,10 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: job-api
+  name: order-api
   namespace: job-platform
   labels:
-    app: job-api
+    app: order-api
 spec:
   replicas: 2
   strategy:
@@ -14,11 +14,11 @@ spec:
       maxSurge: 1
   selector:
     matchLabels:
-      app: job-api
+      app: order-api
   template:
     metadata:
       labels:
-        app: job-api
+        app: order-api
       annotations:
         vault.hashicorp.com/agent-inject: "true"
         vault.hashicorp.com/role: job-platform
@@ -30,8 +30,8 @@ spec:
           {{- end -}}
     spec:
       containers:
-        - name: job-api
-          image: your-dockerhub-username/job-api:dev
+        - name: order-api
+          image: your-dockerhub-username/order-api:dev
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8000
@@ -42,33 +42,32 @@ spec:
           resources:
             requests:
               cpu: 100m
-              memory: 128Mi
+              memory: 256Mi
             limits:
-              cpu: 500m
-              memory: 512Mi
+              cpu: 750m
+              memory: 768Mi
           readinessProbe:
             httpGet:
               path: /readyz
               port: http
-            initialDelaySeconds: 10
+            initialDelaySeconds: 20
             periodSeconds: 10
           livenessProbe:
             httpGet:
               path: /healthz
               port: http
-            initialDelaySeconds: 20
+            initialDelaySeconds: 30
             periodSeconds: 20
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: job-api
+  name: order-api
   namespace: job-platform
 spec:
   selector:
-    app: job-api
+    app: order-api
   ports:
     - name: http
       port: 8000
       targetPort: http
-
