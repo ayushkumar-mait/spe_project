@@ -1,4 +1,4 @@
-from platform_common.models import JobStatus, build_job
+from platform_common.models import Job, JobStatus, build_job
 from platform_common.repository import InMemoryJobRepository
 
 
@@ -25,3 +25,19 @@ def test_repository_tracks_metrics_and_recent_jobs():
     assert metrics.backlog == 1
     assert repo.list_recent(limit=1)[0].job_id == "job-2"
 
+
+def test_job_from_dict_accepts_retry_metadata_and_ignores_unknown_keys():
+    job = Job.from_dict(
+        {
+            "job_id": "job-3",
+            "job_type": "delivery_order",
+            "payload": {"order_id": "job-3"},
+            "status": "queued",
+            "trace_id": "trace-3",
+            "retry_of": "job-1",
+            "recovery_status": "resubmitted",
+        }
+    )
+
+    assert job.retry_of == "job-1"
+    assert job.status == JobStatus.QUEUED

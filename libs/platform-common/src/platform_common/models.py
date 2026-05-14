@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass, field, fields
 from datetime import datetime, timezone
 from enum import StrEnum
 from typing import Any
@@ -31,6 +31,7 @@ class Job:
     error: str | None = None
     attempts: int = 0
     trace_id: str | None = None
+    retry_of: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         data = asdict(self)
@@ -39,7 +40,8 @@ class Job:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "Job":
-        normalized = dict(data)
+        allowed = {item.name for item in fields(cls)}
+        normalized = {key: value for key, value in dict(data).items() if key in allowed}
         normalized["status"] = JobStatus(normalized.get("status", JobStatus.QUEUED))
         return cls(**normalized)
 
