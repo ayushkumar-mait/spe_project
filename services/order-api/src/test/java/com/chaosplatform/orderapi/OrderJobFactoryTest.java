@@ -35,4 +35,35 @@ class OrderJobFactoryTest {
         assertThat(payload).containsEntry("restaurant_name", "Campus Canteen");
         assertThat(payload).containsEntry("priority", 7);
     }
+
+    @Test
+    void createsRetryJobThatClearsForcedFailureAndLinksOriginalJob() {
+        PlaceOrderRequest request = new PlaceOrderRequest();
+        request.setCustomerName("Ayush");
+        request.setRestaurantName("Campus Canteen");
+        request.setPickupAddress("Block A");
+        request.setDeliveryAddress("Hostel Gate");
+        request.setItems(List.of("Paneer Roll"));
+        request.setPriority(5);
+        request.setEstimatedDistanceKm(2.5);
+        request.setSimulateSeconds(2);
+        request.setForceFail(true);
+
+        OrderJobFactory factory = new OrderJobFactory();
+        Map<String, Object> original = factory.createDeliveryJob(request);
+        original.put("status", "failed");
+
+        Map<String, Object> retry = factory.createRetryDeliveryJob(original);
+
+        assertThat(retry).containsEntry("job_type", "delivery_order");
+        assertThat(retry).containsEntry("status", "queued");
+        assertThat(retry).containsEntry("retry_of", original.get("job_id"));
+        assertThat(retry.get("job_id")).isNotEqualTo(original.get("job_id"));
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> payload = (Map<String, Object>) retry.get("payload");
+        assertThat(payload).containsEntry("force_fail", false);
+        assertThat(payload).containsEntry("customer_name", "Ayush");
+        assertThat(payload.get("order_id")).isEqualTo(retry.get("job_id"));
+    }
 }

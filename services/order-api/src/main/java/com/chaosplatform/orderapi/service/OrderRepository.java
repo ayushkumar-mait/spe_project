@@ -101,6 +101,17 @@ public class OrderRepository {
         redisTemplate.opsForValue().set(jobKey(orderId), toJson(job));
     }
 
+    public void linkRecoveryJob(String failedOrderId, String recoveryJobId) {
+        Map<String, Object> job = find(failedOrderId);
+        if (job == null) {
+            return;
+        }
+        job.put("recovery_job_id", recoveryJobId);
+        job.put("recovery_status", "resubmitted");
+        job.put("updated_at", OffsetDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+        redisTemplate.opsForValue().set(jobKey(failedOrderId), toJson(job));
+    }
+
     private String toJson(Map<String, Object> job) {
         try {
             return objectMapper.writeValueAsString(job);

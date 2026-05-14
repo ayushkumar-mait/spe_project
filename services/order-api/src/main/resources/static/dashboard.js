@@ -15,7 +15,8 @@ const state = {
     orders: [],
     selectedOrderId: null,
     activity: [],
-    burstInFlight: false
+    burstInFlight: false,
+    retryInFlight: false
 };
 
 const templates = {
@@ -292,6 +293,9 @@ function renderDetail(order) {
         $("detailUpdated").textContent = "--";
         $("detailStatus").textContent = "No selection";
         $("detailStatus").className = "detail-pill";
+        $("detailHint").textContent = "Select a failed order to resubmit it with failure injection disabled.";
+        $("retryOrderButton").disabled = true;
+        $("retryOrderButton").textContent = "Retry Failed Order";
         $("detailPayload").textContent = "Select an order to inspect payload.";
         $("detailResult").textContent = "Select an order to inspect result.";
         return;
@@ -302,10 +306,25 @@ function renderDetail(order) {
     $("detailUpdated").textContent = formatTime(order.updated_at);
     $("detailStatus").textContent = order.status || "unknown";
     $("detailStatus").className = `detail-pill ${statusClass(order.status)}`;
+    const canRetry = order.status === "failed" && !state.retryInFlight;
+    $("retryOrderButton").disabled = !canRetry;
+    $("retryOrderButton").textContent = order.status === "failed" ? "Retry Failed Order" : "Retry Unavailable";
+    if (order.status === "failed") {
+        if (order.recovery_job_id) {
+            $("detailHint").textContent = `Recovery job ${order.recovery_job_id} was already submitted for this failure.`;
+        } else {
+            $("detailHint").textContent = "This will submit a fresh retry order with force-fail turned off.";
+        }
+    } else {
+        $("detailHint").textContent = "Only failed orders can be retried.";
+    }
     $("detailPayload").textContent = JSON.stringify(order.payload || {}, null, 2);
     $("detailResult").textContent = JSON.stringify({
         result: order.result,
-        error: order.error
+        error: order.error,
+        recovery_job_id: order.recovery_job_id || null,
+        recovery_status: order.recovery_status || null,
+        retry_of: order.retry_of || null
     }, null, 2);
 }
 
@@ -403,6 +422,35 @@ async function runBurst() {
     }
 }
 
+async function retrySelectedOrder() {
+    const order = state.orders.find((entry) => entry.job_id === state.selectedOrderId);
+    if (!order || order.status !== "failed" || state.retryInFlight) {
+        return;
+    }
+
+    const button = $("retryOrderButton");
+    state.retryInFlight = true;
+    button.disabled = true;
+    button.textContent = "Retrying...";
+
+    try {
+        const response = await requestJson(`/orders/${order.job_id}/retry`, {
+            method: "POST"
+        });
+        state.selectedOrderId = response.order_id;
+        pushActivity(
+            "Recovery job queued",
+            `Retry order ${response.order_id} created from failed order ${response.retried_from}.`
+        );
+        await pollPlatform();
+    } catch (error) {
+        pushActivity("Retry failed", error.message);
+    } finally {
+        state.retryInFlight = false;
+        renderDetail(state.orders.find((entry) => entry.job_id === state.selectedOrderId) || order);
+    }
+}
+
 async function copyPlaybookCommand(button) {
     const command = button.dataset.copy;
     if (!command) {
@@ -420,6 +468,7 @@ async function copyPlaybookCommand(button) {
 function installEvents() {
     $("orderForm").addEventListener("submit", submitOrder);
     $("burstButton").addEventListener("click", runBurst);
+    $("retryOrderButton").addEventListener("click", retrySelectedOrder);
     $("refreshButton").addEventListener("click", async () => {
         pushActivity("Manual refresh", "Refreshing health, metrics, and order history.");
         await pollPlatform();

@@ -579,6 +579,15 @@ body::before {
     gap: 10px;
 }
 
+.detail-actions {
+    display: grid;
+    gap: 8px;
+}
+
+.detail-actions .primary-button {
+    width: fit-content;
+}
+
 .detail-list div {
     display: grid;
     gap: 4px;

@@ -257,6 +257,10 @@ kubectl -n job-platform logs deploy/healing-controller --tail=50</pre>
                                 <dd id="detailUpdated">--</dd>
                             </div>
                         </dl>
+                        <div class="detail-actions">
+                            <button id="retryOrderButton" class="primary-button" type="button" disabled>Retry Failed Order</button>
+                            <p id="detailHint" class="subtle">Select a failed order to resubmit it with failure injection disabled.</p>
+                        </div>
                         <div class="json-panels">
                             <section>
                                 <h4>Payload</h4>

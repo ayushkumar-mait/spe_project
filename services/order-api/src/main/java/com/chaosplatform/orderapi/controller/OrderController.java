@@ -17,6 +17,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.chaosplatform.orderapi.model.PlaceOrderRequest;
 import com.chaosplatform.orderapi.service.OrderRepository;
+import com.chaosplatform.orderapi.service.OrderService.OrderNotFoundException;
+import com.chaosplatform.orderapi.service.OrderService.OrderRetryNotAllowedException;
 import com.chaosplatform.orderapi.service.OrderService;
 import com.chaosplatform.orderapi.service.OrderService.QueuePublishException;
 
@@ -62,6 +64,11 @@ public class OrderController {
         return ResponseEntity.ok(order);
     }
 
+    @PostMapping("/orders/{orderId}/retry")
+    public ResponseEntity<Map<String, Object>> retryOrder(@PathVariable String orderId) {
+        return ResponseEntity.accepted().body(orderService.retryFailedOrder(orderId));
+    }
+
     @GetMapping("/orders")
     public List<Map<String, Object>> listOrders(@RequestParam(defaultValue = "50") int limit) {
         return orderRepository.listRecent(Math.max(1, Math.min(limit, 100)));
@@ -75,5 +82,15 @@ public class OrderController {
     @org.springframework.web.bind.annotation.ExceptionHandler(QueuePublishException.class)
     public ResponseEntity<Map<String, String>> queueUnavailable() {
         return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(Map.of("detail", "queue unavailable"));
+    }
+
+    @org.springframework.web.bind.annotation.ExceptionHandler(OrderNotFoundException.class)
+    public ResponseEntity<Map<String, String>> orderNotFound(OrderNotFoundException exc) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("detail", exc.getMessage()));
+    }
+
+    @org.springframework.web.bind.annotation.ExceptionHandler(OrderRetryNotAllowedException.class)
+    public ResponseEntity<Map<String, String>> retryNotAllowed(OrderRetryNotAllowedException exc) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("detail", exc.getMessage()));
     }
 }
