@@ -1,0 +1,41 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: redpanda-topic-init
+  namespace: job-platform
+  labels:
+    app: redpanda-topic-init
+spec:
+  backoffLimit: 6
+  template:
+    metadata:
+      labels:
+        app: redpanda-topic-init
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: topic-init
+          image: docker.redpanda.com/redpandadata/redpanda:v24.3.1
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -eu
+              brokers="redpanda.job-platform.svc.cluster.local:9092"
+              until rpk cluster info -X brokers="$brokers" >/dev/null 2>&1; do sleep 1; done
+              partitions="$(rpk topic describe jobs -X brokers="$brokers" 2>/dev/null | awk '/PARTITIONS/ {print $2}')"
+              if [ -z "$partitions" ]; then
+                rpk topic create jobs -p 6 -r 1 -X brokers="$brokers"
+              elif [ "$partitions" -lt 6 ]; then
+                add_count="$(expr 6 - "$partitions")"
+                rpk topic add-partitions jobs --num "$add_count" -X brokers="$brokers"
+              else
+                echo "jobs topic already has $partitions partitions"
+              fi
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi

@@ -19,6 +19,7 @@
 | Live patching / zero downtime | Rolling update strategy with `maxUnavailable: 0` |
 | Innovation | LitmusChaos plus custom self-healing controller for backlog/failure recovery |
 | Domain-specific project | DevOps/AIOps reliability platform for delivery order processing |
+| Final readiness validation | `scripts/final-evaluation-check.sh` and `docs/FINAL_EVALUATION_RUNBOOK.md` |
 
 ## Marks Strategy
 

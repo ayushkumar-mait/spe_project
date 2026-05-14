@@ -162,6 +162,7 @@ make chaos-pod-delete
 
 - [Architecture](docs/ARCHITECTURE.md)
 - [Demo Guide](docs/DEMO_GUIDE.md)
+- [Final Evaluation Runbook](docs/FINAL_EVALUATION_RUNBOOK.md)
 - [Jenkins Runbook](docs/JENKINS_RUNBOOK.md)
 - [Phase Implementation Map](docs/PHASE_IMPLEMENTATION.md)
 - [Presentation Outline](docs/PRESENTATION_OUTLINE.md)

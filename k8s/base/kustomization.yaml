@@ -4,6 +4,7 @@ resources:
   - namespace.yaml
   - configmap.yaml
   - redpanda.yaml
+  - redpanda-topic-job.yaml
   - redis.yaml
   - rbac.yaml
   - order-api.yaml

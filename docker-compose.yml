@@ -21,6 +21,24 @@ services:
     ports:
       - "9092:9092"
 
+  topic-init:
+    image: docker.redpanda.com/redpandadata/redpanda:v24.3.1
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        until rpk cluster info -X brokers=redpanda:9092 >/dev/null 2>&1; do sleep 1; done
+        partitions="$$(rpk topic describe jobs -X brokers=redpanda:9092 2>/dev/null | awk '/PARTITIONS/ {print $$2}')"
+        if [ -z "$$partitions" ]; then
+          rpk topic create jobs -p 6 -r 1 -X brokers=redpanda:9092
+        elif [ "$$partitions" -lt 6 ]; then
+          add_count="$$(expr 6 - "$$partitions")"
+          rpk topic add-partitions jobs --num "$$add_count" -X brokers=redpanda:9092
+        else
+          echo "jobs topic already has $$partitions partitions"
+        fi
+    depends_on:
+      - redpanda
+
   redis:
     image: redis:7-alpine
     ports:
@@ -82,9 +100,12 @@ services:
       - "8000:8000"
     restart: unless-stopped
     depends_on:
-      - redpanda
-      - redis
-      - logstash
+      topic-init:
+        condition: service_completed_successfully
+      redis:
+        condition: service_started
+      logstash:
+        condition: service_started
     logging:
       driver: gelf
       options:
@@ -102,9 +123,12 @@ services:
       LOG_LEVEL: INFO
     restart: unless-stopped
     depends_on:
-      - redpanda
-      - redis
-      - logstash
+      topic-init:
+        condition: service_completed_successfully
+      redis:
+        condition: service_started
+      logstash:
+        condition: service_started
     logging:
       driver: gelf
       options:

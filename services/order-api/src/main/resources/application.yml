@@ -4,6 +4,8 @@ server:
 spring:
   application:
     name: order-api
+  config:
+    import: optional:file:${VAULT_ENV_FILE:/vault/secrets/platform.env}[.properties]
   data:
     redis:
       url: ${REDIS_URL:redis://localhost:6379/0}
