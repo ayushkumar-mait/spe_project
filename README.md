@@ -108,6 +108,15 @@ kubectl apply -k k8s/base
 kubectl -n job-platform port-forward svc/order-api 8000:8000
 ```
 
+For a local kind demo using Jenkins-built images:
+
+```bash
+kind load docker-image local/order-api:jenkins-local --name chaos-platform
+kind load docker-image local/job-worker:jenkins-local --name chaos-platform
+kind load docker-image local/healing-controller:jenkins-local --name chaos-platform
+kubectl apply -k k8s/overlays/local
+```
+
 Generate load:
 
 ```bash

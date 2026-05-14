@@ -72,9 +72,10 @@ pass "Docker Compose initializes Kafka topic partitions for real worker scaling"
 
 printf '\n== Kubernetes Manifests ==\n'
 kubectl kustomize k8s/base >/tmp/job-platform-kustomize-base.yml
+kubectl kustomize k8s/overlays/local >/tmp/job-platform-kustomize-local.yml
 kubectl kustomize k8s/overlays/dev >/tmp/job-platform-kustomize-dev.yml
 kubectl kustomize k8s/overlays/prod >/tmp/job-platform-kustomize-prod.yml
-pass "Kubernetes base/dev/prod manifests render successfully"
+pass "Kubernetes base/local/dev/prod manifests render successfully"
 grep -q "kind: HorizontalPodAutoscaler" /tmp/job-platform-kustomize-base.yml
 pass "Kubernetes HPA is included"
 grep -q "name: redpanda-topic-init" /tmp/job-platform-kustomize-base.yml

@@ -144,6 +144,19 @@ This proves:
 
 ## 6. Kubernetes Monitoring, Vault, And Chaos
 
+For a local Kubernetes demo with Jenkins-built images:
+
+```bash
+kind create cluster --name chaos-platform
+kind load docker-image local/order-api:jenkins-local --name chaos-platform
+kind load docker-image local/job-worker:jenkins-local --name chaos-platform
+kind load docker-image local/healing-controller:jenkins-local --name chaos-platform
+kubectl apply -k k8s/overlays/local
+kubectl -n job-platform rollout status deploy/order-api
+kubectl -n job-platform rollout status deploy/job-worker
+kubectl -n job-platform port-forward svc/order-api 8000:8000
+```
+
 Deploy ELK/Filebeat:
 
 ```bash
