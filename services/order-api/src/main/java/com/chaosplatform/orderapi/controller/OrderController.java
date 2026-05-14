@@ -32,7 +32,7 @@ public class OrderController {
 
     @GetMapping("/")
     public ResponseEntity<Void> root() {
-        return ResponseEntity.status(HttpStatus.FOUND).location(URI.create("/docs")).build();
+        return ResponseEntity.status(HttpStatus.FOUND).location(URI.create("/dashboard.html")).build();
     }
 
     @GetMapping("/healthz")

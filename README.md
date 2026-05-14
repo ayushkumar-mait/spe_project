@@ -76,6 +76,16 @@ python3 tools/load-generator/load_generator.py --jobs 50 --concurrency 10
 curl http://localhost:8000/metrics
 ```
 
+Open the built-in project dashboard:
+
+```text
+http://localhost:8000/
+```
+
+The dashboard lets you submit delivery orders, run burst traffic from the
+browser, inspect live metrics, review recent orders, and jump to Jenkins,
+Swagger, and Kibana from one place.
+
 Kibana is available at:
 
 ```text

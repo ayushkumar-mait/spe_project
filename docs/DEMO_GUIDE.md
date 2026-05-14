@@ -28,6 +28,20 @@ python3 tools/load-generator/load_generator.py --jobs 30 --concurrency 5
 curl http://localhost:8000/metrics
 ```
 
+Open the dashboard:
+
+```text
+http://localhost:8000/
+```
+
+Use it to:
+
+- submit one delivery order from the browser,
+- generate burst load from the browser,
+- inspect recent jobs and results,
+- show live health and queue metrics,
+- copy the worker pod delete playbook command.
+
 Open Kibana:
 
 ```text

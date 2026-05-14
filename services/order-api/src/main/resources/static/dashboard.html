@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chaos Platform Console</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/dashboard.css">
+</head>
+<body>
+    <div class="page-shell">
+        <header class="hero-band">
+            <div class="hero-copy">
+                <p class="eyebrow">Automated Chaos Testing and Self-Healing Microservices Platform</p>
+                <h1>Live console for the delivery microservices workload</h1>
+                <p class="hero-text">
+                    Submit delivery orders, watch queue pressure, inspect recent jobs, and drive the demo from one place.
+                </p>
+            </div>
+            <div class="hero-actions">
+                <a class="action-link" href="/docs" target="_blank" rel="noreferrer">Open API Docs</a>
+                <a class="action-link" href="http://localhost:8080" target="_blank" rel="noreferrer">Open Jenkins</a>
+                <a class="action-link" href="http://localhost:5601" target="_blank" rel="noreferrer">Open Kibana</a>
+                <button id="refreshButton" class="action-button" type="button">Refresh Now</button>
+            </div>
+        </header>
+
+        <section class="status-band">
+            <article class="status-tile">
+                <span class="status-label">API Liveness</span>
+                <strong id="liveStatus" class="status-value">Checking</strong>
+                <small id="liveNote" class="status-note">Polling /healthz</small>
+            </article>
+            <article class="status-tile">
+                <span class="status-label">Readiness</span>
+                <strong id="readyStatus" class="status-value">Checking</strong>
+                <small id="readyNote" class="status-note">Polling /readyz</small>
+            </article>
+            <article class="status-tile accent">
+                <span class="status-label">Orders Tracked</span>
+                <strong id="totalOrders" class="status-value">0</strong>
+                <small class="status-note">Latest metrics total</small>
+            </article>
+            <article class="status-tile warning">
+                <span class="status-label">Backlog</span>
+                <strong id="backlogValue" class="status-value">0</strong>
+                <small class="status-note">Queued + running pressure</small>
+            </article>
+            <article class="status-tile">
+                <span class="status-label">Last Refresh</span>
+                <strong id="refreshTime" class="status-value">--</strong>
+                <small class="status-note">Auto refresh every 4 seconds</small>
+            </article>
+        </section>
+
+        <main class="workspace-grid">
+            <section class="panel panel-wide">
+                <div class="panel-head">
+                    <div>
+                        <p class="section-kicker">Order Studio</p>
+                        <h2>Create delivery jobs and generate demo traffic</h2>
+                    </div>
+                    <div class="template-strip">
+                        <button class="template-chip" data-template="campus" type="button">Campus Lunch</button>
+                        <button class="template-chip" data-template="express" type="button">Express Drop</button>
+                        <button class="template-chip" data-template="chaos" type="button">Failure Case</button>
+                    </div>
+                </div>
+
+                <form id="orderForm" class="order-form">
+                    <label>
+                        Customer Name
+                        <input id="customerName" name="customerName" type="text" value="Ayush" required>
+                    </label>
+                    <label>
+                        Restaurant
+                        <input id="restaurantName" name="restaurantName" type="text" value="Campus Canteen" required>
+                    </label>
+                    <label>
+                        Pickup Address
+                        <input id="pickupAddress" name="pickupAddress" type="text" value="Block A" required>
+                    </label>
+                    <label>
+                        Delivery Address
+                        <input id="deliveryAddress" name="deliveryAddress" type="text" value="Hostel Gate" required>
+                    </label>
+                    <label class="field-span-2">
+                        Items
+                        <textarea id="items" name="items" rows="3" required>Paneer Roll, Cold Coffee</textarea>
+                    </label>
+                    <label>
+                        Priority
+                        <input id="priority" name="priority" type="range" min="1" max="10" value="5">
+                        <span id="priorityDisplay" class="field-meta">5 / 10</span>
+                    </label>
+                    <label>
+                        Distance (km)
+                        <input id="estimatedDistanceKm" name="estimatedDistanceKm" type="number" min="0.1" max="100" step="0.1" value="2.5">
+                    </label>
+                    <label>
+                        Simulate Seconds
+                        <input id="simulateSeconds" name="simulateSeconds" type="number" min="0" max="30" step="1" value="2">
+                    </label>
+                    <label class="toggle-field">
+                        <input id="forceFail" name="forceFail" type="checkbox">
+                        <span>Force worker failure for self-healing demo</span>
+                    </label>
+
+                    <div class="form-actions field-span-2">
+                        <button id="submitOrderButton" class="primary-button" type="submit">Submit Order</button>
+                        <button id="resetTemplateButton" class="secondary-button" type="button">Reset Sample</button>
+                    </div>
+                </form>
+
+                <div class="burst-lab">
+                    <div>
+                        <p class="section-kicker">Burst Lab</p>
+                        <h3>Generate load without leaving the browser</h3>
+                        <p class="subtle">
+                            This sends repeated order requests to the existing backend so you can demonstrate queue growth and worker scaling.
+                        </p>
+                    </div>
+                    <div class="burst-controls">
+                        <label>
+                            Order Count
+                            <input id="burstCount" type="number" min="1" max="200" step="1" value="18">
+                        </label>
+                        <label>
+                            Concurrency
+                            <input id="burstConcurrency" type="number" min="1" max="20" step="1" value="6">
+                        </label>
+                        <button id="burstButton" class="secondary-button" type="button">Run Burst</button>
+                    </div>
+                </div>
+            </section>
+
+            <aside class="panel panel-side">
+                <div class="panel-head">
+                    <div>
+                        <p class="section-kicker">Runtime View</p>
+                        <h2>Metrics and demo surfaces</h2>
+                    </div>
+                </div>
+
+                <div class="metric-stack">
+                    <div class="metric-row">
+                        <span>Queued</span>
+                        <strong id="metricQueued">0</strong>
+                    </div>
+                    <div class="metric-row">
+                        <span>Running</span>
+                        <strong id="metricRunning">0</strong>
+                    </div>
+                    <div class="metric-row">
+                        <span>Completed</span>
+                        <strong id="metricCompleted">0</strong>
+                    </div>
+                    <div class="metric-row">
+                        <span>Failed</span>
+                        <strong id="metricFailed">0</strong>
+                    </div>
+                    <div class="metric-row">
+                        <span>Cancelled</span>
+                        <strong id="metricCancelled">0</strong>
+                    </div>
+                </div>
+
+                <div class="bar-panel">
+                    <div class="bar-labels">
+                        <span>Queue Health Mix</span>
+                        <strong id="barSummary">0 tracked jobs</strong>
+                    </div>
+                    <div class="stack-bar" aria-hidden="true">
+                        <span id="barQueued" class="bar-segment queued"></span>
+                        <span id="barRunning" class="bar-segment running"></span>
+                        <span id="barCompleted" class="bar-segment completed"></span>
+                        <span id="barFailed" class="bar-segment failed"></span>
+                    </div>
+                </div>
+
+                <div class="service-board">
+                    <article>
+                        <h3>Delivery API</h3>
+                        <p>REST entry point for orders, metrics, and health checks.</p>
+                    </article>
+                    <article>
+                        <h3>Redpanda Queue</h3>
+                        <p>Kafka-compatible buffer between order submission and worker execution.</p>
+                    </article>
+                    <article>
+                        <h3>Redis State Store</h3>
+                        <p>Order status, metrics counters, and healing controller inputs.</p>
+                    </article>
+                    <article>
+                        <h3>Healing Loop</h3>
+                        <p>Custom controller that reacts to backlog and failure thresholds.</p>
+                    </article>
+                </div>
+
+                <div class="playbook">
+                    <div class="playbook-head">
+                        <h3>Chaos Playbook</h3>
+                        <button class="mini-button" data-copy="kubectl -n job-platform delete pod $(kubectl -n job-platform get pod -l app=job-worker -o jsonpath='{.items[0].metadata.name}')">Copy Pod Delete</button>
+                    </div>
+                    <pre>kubectl -n job-platform get pods -l app=job-worker
+kubectl -n job-platform delete pod &lt;worker-pod-name&gt;
+kubectl -n job-platform logs deploy/healing-controller --tail=50</pre>
+                </div>
+            </aside>
+
+            <section class="panel panel-wide">
+                <div class="panel-head">
+                    <div>
+                        <p class="section-kicker">Recent Orders</p>
+                        <h2>Live queue and order history</h2>
+                    </div>
+                    <p class="subtle">Click any row to inspect payload, result, trace ID, and worker outcome.</p>
+                </div>
+                <div class="orders-grid">
+                    <div class="table-wrap">
+                        <table class="orders-table">
+                            <thead>
+                                <tr>
+                                    <th>Order</th>
+                                    <th>Customer</th>
+                                    <th>Restaurant</th>
+                                    <th>Status</th>
+                                    <th>Attempts</th>
+                                    <th>Updated</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ordersTableBody">
+                                <tr>
+                                    <td colspan="6" class="empty-state">Waiting for live order data...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="detail-pane">
+                        <div class="detail-head">
+                            <h3>Order Detail</h3>
+                            <span id="detailStatus" class="detail-pill">No selection</span>
+                        </div>
+                        <dl class="detail-list">
+                            <div>
+                                <dt>Order ID</dt>
+                                <dd id="detailOrderId">--</dd>
+                            </div>
+                            <div>
+                                <dt>Trace ID</dt>
+                                <dd id="detailTraceId">--</dd>
+                            </div>
+                            <div>
+                                <dt>Updated</dt>
+                                <dd id="detailUpdated">--</dd>
+                            </div>
+                        </dl>
+                        <div class="json-panels">
+                            <section>
+                                <h4>Payload</h4>
+                                <pre id="detailPayload">Select an order to inspect payload.</pre>
+                            </section>
+                            <section>
+                                <h4>Result / Error</h4>
+                                <pre id="detailResult">Select an order to inspect result.</pre>
+                            </section>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="panel panel-wide">
+                <div class="panel-head">
+                    <div>
+                        <p class="section-kicker">Console Activity</p>
+                        <h2>What the UI has done</h2>
+                    </div>
+                    <p class="subtle">This activity rail is useful during demo narration.</p>
+                </div>
+                <div id="activityFeed" class="activity-feed">
+                    <article class="activity-item">
+                        <span class="activity-time">--:--:--</span>
+                        <div>
+                            <strong>Dashboard ready</strong>
+                            <p>The console will keep polling health, readiness, metrics, and recent orders.</p>
+                        </div>
+                    </article>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="/dashboard.js" defer></script>
+</body>
+</html>
