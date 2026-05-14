@@ -117,6 +117,8 @@ git push -u origin main
 ```text
 ID: dockerhub-creds
 Type: Username with password
+Username: <your-dockerhub-username>
+Password: Docker Hub access token with Read and Write permissions
 ```
 
 4. Configure GitHub webhook:
@@ -133,6 +135,14 @@ IMAGE_TAG=v1
 PUSH_IMAGES=true
 DEPLOY_TO_K8S=true
 ```
+
+If Jenkins can log in to Docker Hub but image push fails with
+`access token has insufficient scopes`, create a new Docker Hub access token
+with write permission and replace the `dockerhub-creds` credential password.
+
+For a local kind cluster, run `./scripts/start-jenkins.sh` after the kind
+cluster is running. The script prepares a Jenkins-specific kubeconfig that
+allows the Jenkins container to reach the kind API server.
 
 This proves:
 
