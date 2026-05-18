@@ -53,7 +53,7 @@ Type: Username with password
 ```bash
 docker version
 kubectl config current-context
-python3 -m pytest
+./scripts/run-python-tests.sh
 mvn -f services/order-api/pom.xml test
 ```
 

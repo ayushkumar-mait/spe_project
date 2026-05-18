@@ -61,7 +61,7 @@ docs/                          Report, architecture, demo, viva, rubric mapping
 
 ```bash
 cd automated-chaos-testing-self-healing-microservices-platform
-python3 -m pytest
+./scripts/run-python-tests.sh
 docker compose up --build --scale worker=3
 ```
 

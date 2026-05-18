@@ -20,17 +20,6 @@ need_command() {
   fi
 }
 
-select_pytest_python() {
-  local candidate
-  for candidate in "${PYTHON_BIN:-}" python3 /opt/anaconda3/bin/python3; do
-    if [ -n "$candidate" ] && command -v "$candidate" >/dev/null 2>&1 && "$candidate" -m pytest --version >/dev/null 2>&1; then
-      printf '%s' "$candidate"
-      return 0
-    fi
-  done
-  return 1
-}
-
 printf '\n== Tooling ==\n'
 need_command git
 need_command docker
@@ -54,9 +43,7 @@ grep -q "SCMTrigger" infra/jenkins/init.groovy.d/seed-platform-job.groovy
 pass "local Jenkins job has SCM polling fallback"
 
 printf '\n== Tests ==\n'
-PYTEST_PYTHON="$(select_pytest_python)"
-pass "using ${PYTEST_PYTHON} for Python tests"
-"$PYTEST_PYTHON" -m pytest
+./scripts/run-python-tests.sh
 pass "Python tests passed"
 mvn -q -f services/order-api/pom.xml test
 pass "Spring Boot tests passed"

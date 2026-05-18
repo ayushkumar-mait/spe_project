@@ -6,7 +6,7 @@ IMAGE_TAG ?= dev
 .PHONY: test compose-up compose-down build k8s-apply k8s-status load chaos-pod-delete rolling-update
 
 test:
-	python3 -m pytest
+	./scripts/run-python-tests.sh
 	mvn -q -f services/order-api/pom.xml test
 
 compose-up:

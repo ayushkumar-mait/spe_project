@@ -4,7 +4,7 @@
 
 ```bash
 cd automated-chaos-testing-self-healing-microservices-platform
-python3 -m pytest
+./scripts/run-python-tests.sh
 mvn -f services/order-api/pom.xml test
 ```
 

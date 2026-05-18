@@ -2,10 +2,7 @@ package com.chaosplatform.orderapi;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
+import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -24,8 +21,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 class OrderServiceRetryTest {
     @Test
     void retriesFailedOrderAndLinksRecoveryJob() {
-        @SuppressWarnings("unchecked")
-        KafkaOperations<String, String> kafkaTemplate = mock(KafkaOperations.class);
+        KafkaOperations<String, String> kafkaTemplate = successfulKafkaOperations();
         StubOrderRepository repository = new StubOrderRepository();
         StructuredLogger logger = new StructuredLogger(new ObjectMapper());
         ObjectMapper objectMapper = new ObjectMapper();
@@ -56,8 +52,6 @@ class OrderServiceRetryTest {
         )));
 
         repository.store(failedOrder);
-        when(kafkaTemplate.send(anyString(), anyString(), anyString())).thenReturn(CompletableFuture.completedFuture(null));
-
         Map<String, Object> response = service.retryFailedOrder("failed-order-1");
 
         assertThat(response).containsEntry("status", "queued");
@@ -75,8 +69,7 @@ class OrderServiceRetryTest {
 
     @Test
     void rejectsRetryForNonFailedOrder() {
-        @SuppressWarnings("unchecked")
-        KafkaOperations<String, String> kafkaTemplate = mock(KafkaOperations.class);
+        KafkaOperations<String, String> kafkaTemplate = successfulKafkaOperations();
         StubOrderRepository repository = new StubOrderRepository();
         StructuredLogger logger = new StructuredLogger(new ObjectMapper());
         OrderService service = new OrderService(
@@ -97,6 +90,51 @@ class OrderServiceRetryTest {
         assertThatThrownBy(() -> service.retryFailedOrder("order-1"))
                 .isInstanceOf(OrderService.OrderRetryNotAllowedException.class)
                 .hasMessageContaining("only failed orders can be retried");
+    }
+
+    private static KafkaOperations<String, String> successfulKafkaOperations() {
+        @SuppressWarnings("unchecked")
+        KafkaOperations<String, String> kafkaOperations = (KafkaOperations<String, String>) Proxy.newProxyInstance(
+                KafkaOperations.class.getClassLoader(),
+                new Class<?>[] {KafkaOperations.class},
+                (proxy, method, args) -> {
+                    if ("send".equals(method.getName())) {
+                        return CompletableFuture.completedFuture(null);
+                    }
+                    return defaultValue(method.getReturnType());
+                });
+        return kafkaOperations;
+    }
+
+    private static Object defaultValue(Class<?> returnType) {
+        if (!returnType.isPrimitive() || returnType == Void.TYPE) {
+            return null;
+        }
+        if (returnType == Boolean.TYPE) {
+            return false;
+        }
+        if (returnType == Character.TYPE) {
+            return '\0';
+        }
+        if (returnType == Byte.TYPE) {
+            return (byte) 0;
+        }
+        if (returnType == Short.TYPE) {
+            return (short) 0;
+        }
+        if (returnType == Integer.TYPE) {
+            return 0;
+        }
+        if (returnType == Long.TYPE) {
+            return 0L;
+        }
+        if (returnType == Float.TYPE) {
+            return 0F;
+        }
+        if (returnType == Double.TYPE) {
+            return 0D;
+        }
+        return null;
     }
 
     private static final class StubOrderRepository extends OrderRepository {

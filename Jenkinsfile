@@ -33,8 +33,7 @@ pipeline {
 
     stage('Unit Tests') {
       steps {
-        sh 'python3 -m pytest --version || python3 -m pip install -r requirements-dev.txt'
-        sh 'python3 -m pytest'
+        sh './scripts/run-python-tests.sh'
         sh 'mvn -q -f services/order-api/pom.xml test'
       }
     }
