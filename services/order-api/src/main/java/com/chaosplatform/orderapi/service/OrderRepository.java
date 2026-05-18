@@ -61,6 +61,7 @@ public class OrderRepository {
         counts.put("running", 0);
         counts.put("completed", 0);
         counts.put("failed", 0);
+        counts.put("recovered", 0);
         counts.put("cancelled", 0);
 
         for (Map<String, Object> job : listRecent(500)) {

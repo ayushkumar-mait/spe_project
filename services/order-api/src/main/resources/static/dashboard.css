@@ -556,9 +556,18 @@ body::before {
     color: var(--danger);
 }
 
+.status-recovered {
+    background: rgba(18, 130, 119, 0.14);
+    color: #0f6d72;
+}
+
 .status-cancelled {
     background: rgba(86, 94, 102, 0.14);
     color: #465057;
+}
+
+.bar-segment.recovered {
+    background: #0f6d72;
 }
 
 .detail-pane {

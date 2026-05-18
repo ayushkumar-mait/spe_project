@@ -16,6 +16,7 @@ class JobStatus(StrEnum):
     RUNNING = "running"
     COMPLETED = "completed"
     FAILED = "failed"
+    RECOVERED = "recovered"
     CANCELLED = "cancelled"
 
 
@@ -32,6 +33,8 @@ class Job:
     attempts: int = 0
     trace_id: str | None = None
     retry_of: str | None = None
+    recovery_job_id: str | None = None
+    recovery_status: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         data = asdict(self)

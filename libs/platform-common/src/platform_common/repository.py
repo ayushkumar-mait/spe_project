@@ -33,6 +33,9 @@ class JobRepository(Protocol):
     def metrics(self) -> "JobMetrics":
         ...
 
+    def mark_recovered(self, job_id: str, recovery_job_id: str) -> Job | None:
+        ...
+
 
 @dataclass(frozen=True)
 class JobMetrics:
@@ -40,6 +43,7 @@ class JobMetrics:
     running: int
     completed: int
     failed: int
+    recovered: int
     cancelled: int
     total: int
 
@@ -53,6 +57,7 @@ class JobMetrics:
             "running": self.running,
             "completed": self.completed,
             "failed": self.failed,
+            "recovered": self.recovered,
             "cancelled": self.cancelled,
             "total": self.total,
             "backlog": self.backlog,
@@ -95,6 +100,16 @@ class InMemoryJobRepository:
 
     def metrics(self) -> JobMetrics:
         return _metrics_from_jobs(self._jobs.values())
+
+    def mark_recovered(self, job_id: str, recovery_job_id: str) -> Job | None:
+        job = self._jobs.get(job_id)
+        if job is None:
+            return None
+        job.status = JobStatus.RECOVERED
+        job.recovery_job_id = recovery_job_id
+        job.recovery_status = "completed"
+        job.updated_at = _utc_now()
+        return job
 
 
 class RedisJobRepository:
@@ -146,6 +161,17 @@ class RedisJobRepository:
     def metrics(self) -> JobMetrics:
         return _metrics_from_jobs(self.list_recent(limit=500))
 
+    def mark_recovered(self, job_id: str, recovery_job_id: str) -> Job | None:
+        job = self.get(job_id)
+        if job is None:
+            return None
+        job.status = JobStatus.RECOVERED
+        job.recovery_job_id = recovery_job_id
+        job.recovery_status = "completed"
+        job.updated_at = _utc_now()
+        self._client.set(self._job_key(job_id), json.dumps(job.to_dict()))
+        return job
+
     def ping(self) -> bool:
         return bool(self._client.ping())
 
@@ -163,6 +189,7 @@ def _metrics_from_jobs(jobs: Iterable[Job]) -> JobMetrics:
         running=counter[JobStatus.RUNNING],
         completed=counter[JobStatus.COMPLETED],
         failed=counter[JobStatus.FAILED],
+        recovered=counter[JobStatus.RECOVERED],
         cancelled=counter[JobStatus.CANCELLED],
         total=sum(counter.values()),
     )
@@ -170,4 +197,3 @@ def _metrics_from_jobs(jobs: Iterable[Job]) -> JobMetrics:
 
 def _utc_now() -> str:
     return datetime.now(timezone.utc).isoformat()
-

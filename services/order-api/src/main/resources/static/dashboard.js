@@ -4,6 +4,7 @@ const state = {
         running: 0,
         completed: 0,
         failed: 0,
+        recovered: 0,
         cancelled: 0,
         total: 0,
         backlog: 0
@@ -205,6 +206,7 @@ function renderStatus() {
     $("metricRunning").textContent = String(metrics.running ?? 0);
     $("metricCompleted").textContent = String(metrics.completed ?? 0);
     $("metricFailed").textContent = String(metrics.failed ?? 0);
+    $("metricRecovered").textContent = String(metrics.recovered ?? 0);
     $("metricCancelled").textContent = String(metrics.cancelled ?? 0);
 
     const total = Math.max(metrics.total || 0, 1);
@@ -212,13 +214,15 @@ function renderStatus() {
         queued: ((metrics.queued || 0) / total) * 100,
         running: ((metrics.running || 0) / total) * 100,
         completed: ((metrics.completed || 0) / total) * 100,
-        failed: ((metrics.failed || 0) / total) * 100
+        failed: ((metrics.failed || 0) / total) * 100,
+        recovered: ((metrics.recovered || 0) / total) * 100
     };
 
     $("barQueued").style.width = `${segments.queued}%`;
     $("barRunning").style.width = `${segments.running}%`;
     $("barCompleted").style.width = `${segments.completed}%`;
     $("barFailed").style.width = `${segments.failed}%`;
+    $("barRecovered").style.width = `${segments.recovered}%`;
     $("barSummary").textContent = `${metrics.total || 0} tracked jobs`;
 }
 
@@ -228,6 +232,7 @@ function statusClass(status) {
         running: "status-running",
         completed: "status-completed",
         failed: "status-failed",
+        recovered: "status-recovered",
         cancelled: "status-cancelled"
     }[status] || "status-queued";
 }

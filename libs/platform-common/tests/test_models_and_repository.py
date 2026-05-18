@@ -41,3 +41,20 @@ def test_job_from_dict_accepts_retry_metadata_and_ignores_unknown_keys():
 
     assert job.retry_of == "job-1"
     assert job.status == JobStatus.QUEUED
+
+
+def test_repository_marks_failed_job_as_recovered():
+    repo = InMemoryJobRepository()
+    repo.save(build_job("delivery_order", {"order_id": "job-4"}, job_id="job-4"))
+    repo.update("job-4", JobStatus.FAILED, error="boom", increment_attempts=True)
+
+    repo.mark_recovered("job-4", "job-4-retry")
+
+    recovered = repo.get("job-4")
+    assert recovered is not None
+    assert recovered.status == JobStatus.RECOVERED
+    assert recovered.recovery_job_id == "job-4-retry"
+    assert recovered.recovery_status == "completed"
+    metrics = repo.metrics()
+    assert metrics.failed == 0
+    assert metrics.recovered == 1

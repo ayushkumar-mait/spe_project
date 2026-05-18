@@ -76,6 +76,8 @@ def handle_message(message: dict[str, Any], repo: JobRepository, logger: Any) ->
         return
 
     repo.update(job.job_id, JobStatus.COMPLETED, result=result)
+    if job.retry_of:
+        repo.mark_recovered(job.retry_of, job.job_id)
     logger.info(
         "job_processing_completed",
         extra={
