@@ -75,6 +75,8 @@ pipeline {
         expression { return params.DEPLOY_TO_K8S }
       }
       steps {
+        sh 'kubectl get namespace "$K8S_NAMESPACE" >/dev/null 2>&1 && kubectl -n "$K8S_NAMESPACE" delete job redpanda-topic-init --ignore-not-found=true || true'
+        sh 'kubectl -n "$K8S_NAMESPACE" wait --for=delete job/redpanda-topic-init --timeout=60s || true'
         sh 'kubectl apply -k k8s/base'
         sh 'kubectl -n "$K8S_NAMESPACE" rollout status deployment/redis --timeout=180s'
         sh 'kubectl -n "$K8S_NAMESPACE" rollout status deployment/redpanda --timeout=180s'
