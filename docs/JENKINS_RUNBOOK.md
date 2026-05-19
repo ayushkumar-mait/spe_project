@@ -28,13 +28,16 @@ The local setup automatically creates a pipeline job:
 automated-chaos-platform
 ```
 
-That job reads the root `Jenkinsfile` from this repository. It also has a local
-SCM polling trigger for laptop demos. The real GitHub webhook trigger is declared
-inside the `Jenkinsfile` with:
+That job reads the root `Jenkinsfile` from this repository. The pipeline supports
+both GitHub webhooks and SCM polling. The webhook gives near-instant builds when
+Jenkins has a stable public URL. The polling trigger is the laptop-friendly
+fallback: Jenkins checks GitHub every few minutes, so you do not need to update
+the ngrok URL every time it changes.
 
 ```groovy
 triggers {
   githubPush()
+  pollSCM('H/2 * * * *')
 }
 ```
 
@@ -57,11 +60,16 @@ kubectl config current-context
 mvn -f services/order-api/pom.xml test
 ```
 
-4. Configure the GitHub repository webhook:
+4. Optional: configure the GitHub repository webhook if Jenkins has a stable
+public URL:
 
 ```text
 http://<jenkins-host>/github-webhook/
 ```
+
+If you are using temporary ngrok URLs, you can skip the webhook and rely on
+`pollSCM('H/2 * * * *')`. Jenkins will trigger after it detects a new commit on
+GitHub, usually within about two minutes.
 
 5. Set pipeline parameters:
 
