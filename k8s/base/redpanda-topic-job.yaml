@@ -23,15 +23,27 @@ spec:
               set -eu
               brokers="redpanda.job-platform.svc.cluster.local:9092"
               until rpk cluster info -X brokers="$brokers" >/dev/null 2>&1; do sleep 1; done
-              partitions="$(rpk topic describe jobs -X brokers="$brokers" 2>/dev/null | awk '/PARTITIONS/ {print $2}')"
-              if [ -z "$partitions" ]; then
-                rpk topic create jobs -p 6 -r 1 -X brokers="$brokers"
-              elif [ "$partitions" -lt 6 ]; then
-                add_count="$(expr 6 - "$partitions")"
-                rpk topic add-partitions jobs --num "$add_count" -X brokers="$brokers"
-              else
-                echo "jobs topic already has $partitions partitions"
-              fi
+              attempts=0
+              while [ "$attempts" -lt 60 ]; do
+                partitions="$(rpk topic describe jobs -X brokers="$brokers" 2>/dev/null | awk '/PARTITIONS/ {print $2}' || true)"
+                if [ -z "$partitions" ]; then
+                  if rpk topic create jobs -p 6 -r 1 -X brokers="$brokers"; then
+                    exit 0
+                  fi
+                elif [ "$partitions" -lt 6 ]; then
+                  add_count="$(expr 6 - "$partitions")"
+                  if rpk topic add-partitions jobs --num "$add_count" -X brokers="$brokers"; then
+                    exit 0
+                  fi
+                else
+                  echo "jobs topic already has $partitions partitions"
+                  exit 0
+                fi
+                attempts="$(expr "$attempts" + 1)"
+                sleep 2
+              done
+              echo "failed to initialize jobs topic" >&2
+              exit 1
           resources:
             requests:
               cpu: 50m
