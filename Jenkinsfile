@@ -76,12 +76,16 @@ pipeline {
       }
       steps {
         sh 'kubectl apply -k k8s/base'
+        sh 'kubectl -n "$K8S_NAMESPACE" rollout status deployment/redis --timeout=180s'
+        sh 'kubectl -n "$K8S_NAMESPACE" rollout status deployment/redpanda --timeout=180s'
+        sh 'kubectl -n "$K8S_NAMESPACE" wait --for=condition=complete job/redpanda-topic-init --timeout=180s'
         sh 'kubectl -n "$K8S_NAMESPACE" set image deployment/order-api order-api="$ORDER_API_IMAGE"'
         sh 'kubectl -n "$K8S_NAMESPACE" set image deployment/job-worker worker="$WORKER_IMAGE"'
         sh 'kubectl -n "$K8S_NAMESPACE" set image deployment/healing-controller healing-controller="$HEALER_IMAGE"'
-        sh 'kubectl -n "$K8S_NAMESPACE" rollout status deployment/order-api --timeout=180s'
-        sh 'kubectl -n "$K8S_NAMESPACE" rollout status deployment/job-worker --timeout=180s'
-        sh 'kubectl -n "$K8S_NAMESPACE" rollout status deployment/healing-controller --timeout=180s'
+        sh 'kubectl -n "$K8S_NAMESPACE" rollout restart deployment/job-worker'
+        sh 'kubectl -n "$K8S_NAMESPACE" rollout status deployment/order-api --timeout=240s'
+        sh 'kubectl -n "$K8S_NAMESPACE" rollout status deployment/job-worker --timeout=240s'
+        sh 'kubectl -n "$K8S_NAMESPACE" rollout status deployment/healing-controller --timeout=240s'
       }
     }
   }
