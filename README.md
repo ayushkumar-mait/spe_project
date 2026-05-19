@@ -100,7 +100,9 @@ job-platform-logs-*
 
 ## Kubernetes Demo
 
-Build and push images first:
+The Jenkins pipeline is configured to push Docker Hub images and deploy to
+Kubernetes automatically on GitHub push or SCM polling. For a manual Kubernetes
+demo, build and push images first:
 
 ```bash
 export DOCKERHUB_ORG=your-dockerhub-username
@@ -162,7 +164,17 @@ Configure Jenkins with:
 - Kubernetes access for the Jenkins agent
 
 The included `Jenkinsfile` performs checkout, tests, Docker image build, Docker
-Hub push, Kubernetes deployment, and rollout verification.
+Hub push, Kubernetes deployment, and rollout verification. The default pipeline
+parameters now run the complete CI/CD path automatically:
+
+```text
+DOCKERHUB_ORG=ayush81080
+IMAGE_TAG=auto
+PUSH_IMAGES=true
+DEPLOY_TO_K8S=true
+```
+
+`IMAGE_TAG=auto` tags each image with the Git commit SHA.
 
 ## Main Commands
 

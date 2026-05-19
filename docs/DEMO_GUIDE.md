@@ -175,15 +175,26 @@ Run the seeded job:
 automated-chaos-platform
 ```
 
-For a laptop-only run, keep:
+The default Jenkins parameters now run the full pipeline automatically:
+
+```text
+DOCKERHUB_ORG=ayush81080
+IMAGE_TAG=auto
+PUSH_IMAGES=true
+DEPLOY_TO_K8S=true
+```
+
+This means a GitHub push, webhook, or SCM polling trigger will test, build,
+push Docker Hub images, deploy to Kubernetes, and verify rollout status without
+manually ticking boxes. For a laptop-only build, override:
 
 ```text
 PUSH_IMAGES=false
 DEPLOY_TO_K8S=false
 ```
 
-For the complete CI/CD run with Docker Hub and Kubernetes, set both values to
-`true` after adding the `dockerhub-creds` credential and Kubernetes context.
+The full automatic path requires the Jenkins credential `dockerhub-creds` and a
+working Kubernetes context inside the Jenkins container.
 
 Show the `Jenkinsfile` stages:
 

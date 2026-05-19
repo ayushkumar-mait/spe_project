@@ -35,16 +35,18 @@ http://localhost:8080
 admin / admin
 ```
 
-Run `automated-chaos-platform` with:
+The default Jenkins parameters now run the full CI/CD path:
 
 ```text
-DOCKERHUB_ORG=local
-IMAGE_TAG=jenkins-local
-PUSH_IMAGES=false
-DEPLOY_TO_K8S=false
+DOCKERHUB_ORG=ayush81080
+IMAGE_TAG=auto
+PUSH_IMAGES=true
+DEPLOY_TO_K8S=true
 ```
 
-This proves checkout, automated tests, and Docker image builds locally.
+This proves checkout, automated tests, Docker image builds, Docker Hub push,
+Kubernetes deployment, and rollout verification. For a laptop-only build, run
+the job manually and override `PUSH_IMAGES=false` and `DEPLOY_TO_K8S=false`.
 
 ## 3. Local Runtime Demo
 
@@ -121,20 +123,21 @@ Username: <your-dockerhub-username>
 Password: Docker Hub access token with Read and Write permissions
 ```
 
-4. Configure GitHub webhook:
+4. Optional: configure GitHub webhook:
 
 ```text
 http://<jenkins-host>/github-webhook/
 ```
 
-5. Run Jenkins with:
+If ngrok changes often, use the built-in SCM polling fallback instead. The
+Jenkinsfile contains:
 
 ```text
-DOCKERHUB_ORG=<your-dockerhub-username>
-IMAGE_TAG=v1
-PUSH_IMAGES=true
-DEPLOY_TO_K8S=true
+pollSCM('H/2 * * * *')
 ```
+
+So Jenkins checks GitHub every few minutes and triggers automatically after a
+push even without updating the webhook URL.
 
 If Jenkins can log in to Docker Hub but image push fails with
 `access token has insufficient scopes`, create a new Docker Hub access token

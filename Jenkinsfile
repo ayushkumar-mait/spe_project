@@ -12,23 +12,32 @@ pipeline {
   }
 
   parameters {
-    string(name: 'DOCKERHUB_ORG', defaultValue: 'your-dockerhub-username', description: 'Docker Hub namespace')
-    string(name: 'IMAGE_TAG', defaultValue: 'dev', description: 'Image tag to build and deploy')
+    string(name: 'DOCKERHUB_ORG', defaultValue: 'ayush81080', description: 'Docker Hub namespace')
+    string(name: 'IMAGE_TAG', defaultValue: 'auto', description: 'Image tag to build and deploy. Use auto for the Git commit SHA.')
     string(name: 'K8S_NAMESPACE', defaultValue: 'job-platform', description: 'Target Kubernetes namespace')
-    booleanParam(name: 'PUSH_IMAGES', defaultValue: false, description: 'Push built images to Docker Hub')
-    booleanParam(name: 'DEPLOY_TO_K8S', defaultValue: false, description: 'Deploy images to Kubernetes')
-  }
-
-  environment {
-    ORDER_API_IMAGE = "${params.DOCKERHUB_ORG}/order-api:${params.IMAGE_TAG}"
-    WORKER_IMAGE = "${params.DOCKERHUB_ORG}/job-worker:${params.IMAGE_TAG}"
-    HEALER_IMAGE = "${params.DOCKERHUB_ORG}/healing-controller:${params.IMAGE_TAG}"
+    booleanParam(name: 'PUSH_IMAGES', defaultValue: true, description: 'Push built images to Docker Hub')
+    booleanParam(name: 'DEPLOY_TO_K8S', defaultValue: true, description: 'Deploy images to Kubernetes')
   }
 
   stages {
     stage('Checkout') {
       steps {
         checkout scm
+      }
+    }
+
+    stage('Resolve Image Tags') {
+      steps {
+        script {
+          def requestedTag = params.IMAGE_TAG?.trim()
+          env.RESOLVED_IMAGE_TAG = (requestedTag && requestedTag != 'auto')
+              ? requestedTag
+              : sh(script: 'git rev-parse --short=12 HEAD', returnStdout: true).trim()
+          env.ORDER_API_IMAGE = "${params.DOCKERHUB_ORG}/order-api:${env.RESOLVED_IMAGE_TAG}"
+          env.WORKER_IMAGE = "${params.DOCKERHUB_ORG}/job-worker:${env.RESOLVED_IMAGE_TAG}"
+          env.HEALER_IMAGE = "${params.DOCKERHUB_ORG}/healing-controller:${env.RESOLVED_IMAGE_TAG}"
+          echo "Resolved image tag: ${env.RESOLVED_IMAGE_TAG}"
+        }
       }
     }
 

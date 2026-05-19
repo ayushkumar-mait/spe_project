@@ -28,6 +28,10 @@ The local setup automatically creates a pipeline job:
 automated-chaos-platform
 ```
 
+The seed job is refreshed from `infra/jenkins/init.groovy.d` on Jenkins startup,
+so rerunning `./scripts/start-jenkins.sh` updates the job SCM URL and polling
+settings without deleting Jenkins data.
+
 That job reads the root `Jenkinsfile` from this repository. The pipeline supports
 both GitHub webhooks and SCM polling. The webhook gives near-instant builds when
 Jenkins has a stable public URL. The polling trigger is the laptop-friendly
@@ -43,7 +47,12 @@ triggers {
 
 ## Real GitHub + Docker Hub Setup
 
-1. Push this repository to GitHub.
+1. Push this repository to GitHub. The local Jenkins seed job points directly to:
+
+```text
+https://github.com/ayushkumar-mait/spe_project.git
+```
+
 2. In Jenkins, create a Docker Hub credential:
 
 ```text
@@ -74,17 +83,17 @@ GitHub, usually within about two minutes.
 5. Set pipeline parameters:
 
 ```text
-DOCKERHUB_ORG=<your Docker Hub username>
-IMAGE_TAG=<build tag>
+DOCKERHUB_ORG=ayush81080
+IMAGE_TAG=auto
 K8S_NAMESPACE=job-platform
 PUSH_IMAGES=true
 DEPLOY_TO_K8S=true
 ```
 
-For the laptop-only Jenkins demo, leave `PUSH_IMAGES=false` and
-`DEPLOY_TO_K8S=false`. Jenkins will still checkout, test, and build all Docker
-images. Enable both flags when Docker Hub credentials and Kubernetes context are
-ready.
+These are now the defaults in the `Jenkinsfile`, so webhook and SCM polling
+builds automatically test, build, push Docker Hub images, deploy to Kubernetes,
+and verify rollouts. `IMAGE_TAG=auto` tags images with the Git commit SHA. For a
+laptop-only build, manually override `PUSH_IMAGES=false` and `DEPLOY_TO_K8S=false`.
 
 ## What Jenkins Controls
 
