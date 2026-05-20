@@ -3,7 +3,7 @@ NAMESPACE ?= job-platform
 DOCKERHUB_ORG ?= your-dockerhub-username
 IMAGE_TAG ?= dev
 
-.PHONY: test compose-up compose-down build k8s-apply k8s-status load chaos-pod-delete rolling-update
+.PHONY: test compose-up compose-down observability-up observability-down build k8s-apply k8s-status load chaos-pod-delete rolling-update
 
 test:
 	./scripts/run-python-tests.sh
@@ -14,6 +14,12 @@ compose-up:
 
 compose-down:
 	docker compose down -v
+
+observability-up:
+	./scripts/start-observability.sh
+
+observability-down:
+	docker compose stop elasticsearch logstash kibana
 
 build:
 	docker build -f services/order-api/Dockerfile -t $(DOCKERHUB_ORG)/order-api:$(IMAGE_TAG) .

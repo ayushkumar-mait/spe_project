@@ -1,0 +1,1109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Automated Chaos Testing Platform - A DevOps Walkthrough</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@9..144,400;9..144,500;9..144,700;9..144,900&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f4eee2;
+    --surface: #fbf7ee;
+    --ink: #14110b;
+    --muted: #6b5f4f;
+    --rust: #b54a17;
+    --rust-soft: #d97d4f;
+    --forest: #2d4a3e;
+    --forest-soft: #5a8076;
+    --code-bg: #1d1813;
+    --code-fg: #ece2cf;
+    --code-key: #e9a866;
+    --code-str: #b5c98f;
+    --code-com: #7a6e5e;
+    --code-num: #d97d4f;
+    --line: #d8cdb5;
+    --line-strong: #b9aa8a;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "IBM Plex Sans", system-ui, sans-serif;
+    font-size: 16.5px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    background-image:
+      radial-gradient(circle at 18% 8%, rgba(181,74,23,0.05), transparent 40%),
+      radial-gradient(circle at 88% 58%, rgba(45,74,62,0.06), transparent 50%);
+  }
+  .wrap {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 60px 32px 120px;
+  }
+  .hero {
+    border-bottom: 1px solid var(--line-strong);
+    padding-bottom: 48px;
+    margin-bottom: 56px;
+  }
+  .eyebrow {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--rust);
+    margin-bottom: 16px;
+  }
+  h1 {
+    font-family: "Fraunces", serif;
+    font-variation-settings: "opsz" 144, "SOFT" 50, "WONK" 1;
+    font-weight: 700;
+    font-size: clamp(40px, 6vw, 68px);
+    line-height: 1.02;
+    margin: 0 0 24px;
+    letter-spacing: -0.02em;
+  }
+  h1 em {
+    font-style: italic;
+    color: var(--rust);
+    font-variation-settings: "opsz" 144, "SOFT" 100, "WONK" 1;
+  }
+  .lede {
+    font-family: "Fraunces", serif;
+    font-variation-settings: "opsz" 36;
+    font-size: 21px;
+    line-height: 1.5;
+    color: var(--muted);
+    max-width: 760px;
+  }
+  .meta {
+    display: flex;
+    gap: 32px;
+    flex-wrap: wrap;
+    margin-top: 36px;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .meta span strong {
+    color: var(--ink);
+    display: block;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-size: 10px;
+    margin-bottom: 4px;
+  }
+  section {
+    margin: 80px 0;
+    scroll-margin-top: 24px;
+  }
+  .sec-num {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12px;
+    letter-spacing: 0.2em;
+    color: var(--rust);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    display: block;
+  }
+  h2 {
+    font-family: "Fraunces", serif;
+    font-variation-settings: "opsz" 96, "WONK" 1;
+    font-weight: 600;
+    font-size: clamp(30px, 4vw, 42px);
+    line-height: 1.1;
+    margin: 0 0 28px;
+    letter-spacing: -0.015em;
+    padding-bottom: 14px;
+    border-bottom: 2px solid var(--ink);
+  }
+  h3 {
+    font-family: "Fraunces", serif;
+    font-variation-settings: "opsz" 36;
+    font-weight: 600;
+    font-size: 24px;
+    margin: 48px 0 16px;
+    letter-spacing: -0.01em;
+  }
+  h4 {
+    font-family: "IBM Plex Sans", sans-serif;
+    font-weight: 600;
+    font-size: 15px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin: 28px 0 10px;
+    color: var(--rust);
+  }
+  p { margin: 0 0 16px; }
+  a { color: var(--rust); text-decoration: underline; text-underline-offset: 3px; }
+  .toc {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--rust);
+    padding: 28px 32px;
+    margin-bottom: 64px;
+  }
+  .toc-title {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 16px;
+  }
+  .toc ol {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    counter-reset: toc;
+    columns: 2;
+    column-gap: 40px;
+  }
+  .toc li {
+    counter-increment: toc;
+    padding: 6px 0;
+    font-family: "Fraunces", serif;
+    font-size: 17px;
+    break-inside: avoid;
+  }
+  .toc li::before {
+    content: counter(toc, decimal-leading-zero);
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11px;
+    color: var(--rust);
+    margin-right: 12px;
+    vertical-align: middle;
+  }
+  .toc a { text-decoration: none; }
+  .toc a:hover { text-decoration: underline; }
+  code.inline {
+    font-family: "IBM Plex Mono", monospace;
+    background: rgba(181,74,23,0.08);
+    border: 1px solid rgba(181,74,23,0.18);
+    color: var(--rust);
+    padding: 1px 7px;
+    border-radius: 4px;
+    font-size: 0.88em;
+  }
+  .code-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #15110d;
+    color: var(--code-com);
+    padding: 10px 20px;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    border-radius: 6px 6px 0 0;
+    border-bottom: 1px solid #2a241d;
+  }
+  .code-header .dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background: var(--rust-soft);
+    border-radius: 50%;
+    margin-right: 10px;
+    vertical-align: middle;
+  }
+  .code {
+    background: var(--code-bg);
+    color: var(--code-fg);
+    border-radius: 0 0 6px 6px;
+    padding: 22px 24px 22px 0;
+    margin: 0 0 20px;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 13.5px;
+    line-height: 1.7;
+    overflow-x: auto;
+    position: relative;
+    box-shadow: 0 4px 16px rgba(20,17,11,0.12);
+  }
+  .code pre {
+    margin: 0;
+    counter-reset: line;
+  }
+  .code .ln {
+    display: block;
+    padding-left: 64px;
+    position: relative;
+    white-space: pre;
+  }
+  .code .ln::before {
+    counter-increment: line;
+    content: counter(line);
+    position: absolute;
+    left: 0;
+    width: 48px;
+    text-align: right;
+    color: var(--code-com);
+    padding-right: 12px;
+    border-right: 1px solid #2a241d;
+    user-select: none;
+  }
+  .k { color: var(--code-key); }
+  .s { color: var(--code-str); }
+  .c { color: var(--code-com); font-style: italic; }
+  .n { color: var(--code-num); }
+  .v { color: #d2b48c; }
+  .lines {
+    margin: 16px 0 36px;
+    border-top: 1px solid var(--line);
+  }
+  .lrow {
+    display: grid;
+    grid-template-columns: 82px 1fr;
+    gap: 24px;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .lrow .ltag {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    color: var(--rust);
+    text-transform: uppercase;
+    padding-top: 4px;
+  }
+  .lrow .lbody {
+    font-size: 15.5px;
+  }
+  .lrow .lbody code {
+    font-family: "IBM Plex Mono", monospace;
+    background: rgba(20,17,11,0.06);
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 0.88em;
+    color: #2a2418;
+  }
+  .callout {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--forest);
+    padding: 20px 24px;
+    margin: 24px 0;
+    border-radius: 0 4px 4px 0;
+  }
+  .callout.warn { border-left-color: var(--rust); }
+  .callout .ctitle {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--forest);
+    margin-bottom: 8px;
+  }
+  .callout.warn .ctitle { color: var(--rust); }
+  .concept-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 18px;
+    margin: 28px 0;
+  }
+  .concept {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    padding: 22px 22px 20px;
+    border-radius: 4px;
+    position: relative;
+  }
+  .concept::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 32px;
+    height: 4px;
+    background: var(--rust);
+  }
+  .concept h5 {
+    font-family: "Fraunces", serif;
+    font-size: 19px;
+    margin: 0 0 8px;
+    font-weight: 600;
+  }
+  .concept p {
+    font-size: 14.5px;
+    color: var(--muted);
+    margin: 0;
+    line-height: 1.55;
+  }
+  .concept .tag {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--rust);
+    margin-bottom: 6px;
+    display: block;
+  }
+  .flow {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    padding: 32px;
+    margin: 24px 0;
+    border-radius: 4px;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 13px;
+    line-height: 2;
+    overflow-x: auto;
+  }
+  .flow .arrow { color: var(--rust); margin: 0 8px; }
+  .flow .step { color: var(--ink); }
+  .flow .lbl { color: var(--forest); }
+  .filelist {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    padding: 24px;
+    border-radius: 4px;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 13px;
+    line-height: 1.9;
+    overflow-x: auto;
+  }
+  .filelist .dir { color: var(--rust); font-weight: 600; }
+  .filelist .file { color: var(--ink); }
+  .filelist .desc { color: var(--muted); }
+  .table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 22px 0 32px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+  }
+  .table th, .table td {
+    padding: 14px 16px;
+    text-align: left;
+    vertical-align: top;
+    border-bottom: 1px solid var(--line);
+  }
+  .table th {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--rust);
+  }
+  footer {
+    margin-top: 80px;
+    padding-top: 32px;
+    border-top: 1px solid var(--line-strong);
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+  }
+  footer .sig {
+    font-family: "Fraunces", serif;
+    font-style: italic;
+    font-size: 16px;
+    color: var(--ink);
+    letter-spacing: 0;
+    margin-bottom: 8px;
+  }
+  @media (max-width: 720px) {
+    .wrap { padding: 40px 20px 80px; }
+    .toc ol { columns: 1; }
+    .lrow { grid-template-columns: 60px 1fr; gap: 14px; }
+    h1 { font-size: 42px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <div class="eyebrow">A DevOps Walkthrough - Delivery Chaos Platform</div>
+  <h1>Automated <em>Chaos Testing</em> and Self-Healing Microservices, Line by Line.</h1>
+  <p class="lede">
+    A complete walkthrough of <strong>ayushkumar-mait/spe_project</strong> - a production-style
+    delivery order platform where a Spring Boot API accepts orders, Redpanda queues them,
+    Python workers process them, Redis stores state, Jenkins deploys to Kubernetes, and a
+    custom healing controller recovers from backlog and failure conditions.
+  </p>
+  <div class="meta">
+    <span><strong>Stack</strong>Spring Boot - Python - Redpanda - Redis - Docker - Jenkins - Kubernetes</span>
+    <span><strong>Pipeline</strong>GitHub Push - Jenkins - Docker Hub - K8s Rollout</span>
+    <span><strong>Pattern</strong>CI/CD + Queue Workers + Chaos + Self-Healing + Observability</span>
+  </div>
+</header>
+
+<nav class="toc">
+  <div class="toc-title">Contents</div>
+  <ol>
+    <li><a href="#overview">Project overview and topology</a></li>
+    <li><a href="#runtime">Runtime order flow</a></li>
+    <li><a href="#concepts">DevOps and reliability concepts</a></li>
+    <li><a href="#application">Application layer</a></li>
+    <li><a href="#jenkinsfile">The Jenkinsfile</a></li>
+    <li><a href="#docker">Docker and Compose</a></li>
+    <li><a href="#kubernetes">Kubernetes manifests</a></li>
+    <li><a href="#ansible">Ansible roles</a></li>
+    <li><a href="#observability">ELK observability</a></li>
+    <li><a href="#security">Vault and security</a></li>
+    <li><a href="#chaos">Chaos and self-healing</a></li>
+    <li><a href="#demo">Demo runbook</a></li>
+  </ol>
+</nav>
+
+<section id="overview">
+  <span class="sec-num">§ 01</span>
+  <h2>Project overview and topology</h2>
+
+  <p>
+    This project is a cloud-native DevOps and reliability engineering platform built around
+    a delivery order processing application. The user-facing part is simple: a customer places
+    a delivery order. The important engineering part is everything around that order: queuing,
+    asynchronous processing, health checks, metrics, CI/CD automation, Kubernetes deployment,
+    observability, chaos experiments, and automatic recovery.
+  </p>
+
+  <p>
+    The repository is divided by operational responsibility. That makes the system easy to
+    explain in a project demo: every folder answers a specific production engineering question.
+  </p>
+
+  <div class="filelist">
+<span class="dir">services/order-api/</span>            <span class="desc"># Spring Boot REST API, dashboard, Swagger, order retry endpoint</span>
+<span class="dir">services/worker/</span>               <span class="desc"># Python queue consumer that simulates delivery processing</span>
+<span class="dir">services/healing-controller/</span>   <span class="desc"># Python controller that scales or restarts workers</span>
+<span class="dir">libs/platform-common/</span>          <span class="desc"># Shared models, Redis repository, queue helpers, structured logging</span>
+<span class="dir">k8s/base/</span>                      <span class="desc"># Namespace, deployments, services, RBAC, HPA, PDB, topic init job</span>
+<span class="dir">k8s/overlays/</span>                  <span class="desc"># Local, dev, and prod image overlays</span>
+<span class="dir">chaos/experiments/</span>             <span class="desc"># LitmusChaos pod delete, CPU stress, and network latency experiments</span>
+<span class="dir">observability/</span>                 <span class="desc"># ELK, Filebeat, Logstash, and Kibana setup</span>
+<span class="dir">vault/</span>                         <span class="desc"># Vault policy and bootstrap script for runtime secrets</span>
+<span class="dir">ansible/</span>                       <span class="desc"># Role-based deployment automation</span>
+<span class="dir">tools/load-generator/</span>          <span class="desc"># Load generator for backlog, HPA, and healing demos</span>
+<span class="file">Jenkinsfile</span>                    <span class="desc"># Pipeline-as-code for test, build, push, deploy, and rollout verify</span>
+  </div>
+
+  <div class="callout">
+    <div class="ctitle">Layman explanation</div>
+    Think of it like a food delivery company. The website accepts orders, a queue holds the
+    orders, delivery staff process them, a dashboard shows status, and an operations system
+    automatically adds more staff or restarts broken workers when the queue becomes unhealthy.
+  </div>
+</section>
+
+<section id="runtime">
+  <span class="sec-num">§ 02</span>
+  <h2>Runtime order flow</h2>
+
+  <p>
+    The application is event-driven. The API does not process the full delivery order inside
+    the HTTP request. It stores the order, publishes a message, and lets workers do the
+    background work. This is what makes the design scalable and resilient.
+  </p>
+
+  <div class="flow">
+    <span class="step">Customer / Dashboard</span>
+    <span class="arrow">-&gt;</span>
+    <span class="lbl">POST /orders</span>
+    <span class="arrow">-&gt;</span>
+    <span class="step">Spring Boot Order API</span>
+    <span class="arrow">-&gt;</span>
+    <span class="lbl">save queued state</span>
+    <span class="arrow">-&gt;</span>
+    <span class="step">Redis</span>
+    <br>
+    <span class="step">Order API</span>
+    <span class="arrow">-&gt;</span>
+    <span class="lbl">publish delivery_order</span>
+    <span class="arrow">-&gt;</span>
+    <span class="step">Redpanda topic: jobs</span>
+    <span class="arrow">-&gt;</span>
+    <span class="step">Worker pods</span>
+    <br>
+    <span class="step">Workers</span>
+    <span class="arrow">-&gt;</span>
+    <span class="lbl">running / completed / failed</span>
+    <span class="arrow">-&gt;</span>
+    <span class="step">Redis metrics</span>
+    <span class="arrow">-&gt;</span>
+    <span class="step">Dashboard + Healing Controller</span>
+  </div>
+
+  <table class="table">
+    <thead>
+      <tr><th>Step</th><th>Component</th><th>What happens</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>1</td><td>Order API</td><td>Creates order ID and trace ID, validates JSON, stores queued state.</td></tr>
+      <tr><td>2</td><td>Redpanda</td><td>Buffers the order as a Kafka-compatible message on topic <code class="inline">jobs</code>.</td></tr>
+      <tr><td>3</td><td>Worker</td><td>Consumes messages and simulates payment, restaurant confirmation, rider assignment, route calculation, and notification.</td></tr>
+      <tr><td>4</td><td>Redis</td><td>Stores status, result, error, retry metadata, and metrics counters.</td></tr>
+      <tr><td>5</td><td>Healing Controller</td><td>Reads backlog and failure counts, then scales or restarts workers through the Kubernetes API.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section id="concepts">
+  <span class="sec-num">§ 03</span>
+  <h2>DevOps and reliability concepts present in this project</h2>
+
+  <div class="concept-grid">
+    <div class="concept">
+      <span class="tag">CI/CD</span>
+      <h5>Jenkins Pipeline</h5>
+      <p>GitHub push triggers checkout, tests, Docker builds, Docker Hub push, Kubernetes deploy, and rollout verification.</p>
+    </div>
+    <div class="concept">
+      <span class="tag">Containerization</span>
+      <h5>Docker</h5>
+      <p>Order API, worker, and healing controller each have reproducible images with their own runtime dependencies.</p>
+    </div>
+    <div class="concept">
+      <span class="tag">Orchestration</span>
+      <h5>Kubernetes</h5>
+      <p>Deployments, Services, probes, HPA, PDB, RBAC, and rolling updates make the system production-like.</p>
+    </div>
+    <div class="concept">
+      <span class="tag">Decoupling</span>
+      <h5>Redpanda Queue</h5>
+      <p>The API and workers communicate through a topic, so slow processing does not block user requests.</p>
+    </div>
+    <div class="concept">
+      <span class="tag">State</span>
+      <h5>Redis</h5>
+      <p>Stores order state and metrics used by the dashboard, API, worker, and self-healing controller.</p>
+    </div>
+    <div class="concept">
+      <span class="tag">Recovery</span>
+      <h5>Self-Healing</h5>
+      <p>Kubernetes recreates pods, HPA scales CPU pressure, and the custom controller reacts to app-level backlog.</p>
+    </div>
+    <div class="concept">
+      <span class="tag">Observability</span>
+      <h5>ELK Stack</h5>
+      <p>Structured JSON logs are collected by Logstash or Filebeat, stored in Elasticsearch, and searched in Kibana.</p>
+    </div>
+    <div class="concept">
+      <span class="tag">Security</span>
+      <h5>Vault</h5>
+      <p>Vault annotations and policies show how secrets can be injected at runtime instead of hardcoded in Git.</p>
+    </div>
+  </div>
+</section>
+
+<section id="application">
+  <span class="sec-num">§ 04</span>
+  <h2>Application layer</h2>
+
+  <p>
+    The application is deliberately domain-based, not abstract. Instead of generic jobs, it uses
+    delivery orders, restaurants, addresses, riders, and failed-order retry. This makes the demo
+    easier to explain to classmates while still proving serious DevOps concepts underneath.
+  </p>
+
+  <h3>4.1 - Spring Boot API endpoints</h3>
+  <div class="code-header"><span><span class="dot"></span>services/order-api/.../OrderController.java</span><span>REST surface</span></div>
+  <div class="code"><pre>
+<span class="ln"><span class="k">@GetMapping</span>(<span class="s">"/healthz"</span>)       <span class="c">// liveness: process is alive</span></span>
+<span class="ln"><span class="k">@GetMapping</span>(<span class="s">"/readyz"</span>)        <span class="c">// readiness: Redis dependency reachable</span></span>
+<span class="ln"><span class="k">@PostMapping</span>(<span class="s">"/orders"</span>)       <span class="c">// submit a delivery order</span></span>
+<span class="ln"><span class="k">@GetMapping</span>(<span class="s">"/orders/{orderId}"</span>)</span>
+<span class="ln"><span class="k">@PostMapping</span>(<span class="s">"/orders/{orderId}/retry"</span>)</span>
+<span class="ln"><span class="k">@GetMapping</span>(<span class="s">"/metrics"</span>)      <span class="c">// queued, running, completed, failed, recovered</span></span>
+  </pre></div>
+
+  <div class="lines">
+    <div class="lrow"><div class="ltag">API</div><div class="lbody">The controller exposes user-facing operations: submit orders, list recent orders, retry failed orders, and read metrics.</div></div>
+    <div class="lrow"><div class="ltag">Health</div><div class="lbody"><code>/healthz</code> tells Kubernetes the process is alive. <code>/readyz</code> checks Redis so traffic is only sent to ready pods.</div></div>
+    <div class="lrow"><div class="ltag">Retry</div><div class="lbody"><code>/orders/{orderId}/retry</code> is the business recovery endpoint: a failed customer order can be submitted again as a clean recovery job.</div></div>
+  </div>
+
+  <h3>4.2 - Order submission and retry logic</h3>
+  <div class="code-header"><span><span class="dot"></span>OrderService.java</span><span>queue producer</span></div>
+  <div class="code"><pre>
+<span class="ln"><span class="k">public</span> Map&lt;String, Object&gt; placeOrder(PlaceOrderRequest request) {</span>
+<span class="ln">  Map&lt;String, Object&gt; job = orderJobFactory.createDeliveryJob(request);</span>
+<span class="ln">  <span class="k">return</span> enqueueJob(job, <span class="k">null</span>);</span>
+<span class="ln">}</span>
+<span class="ln"></span>
+<span class="ln"><span class="k">public</span> Map&lt;String, Object&gt; retryFailedOrder(String failedOrderId) {</span>
+<span class="ln">  Map&lt;String, Object&gt; existing = orderRepository.find(failedOrderId);</span>
+<span class="ln">  <span class="k">if</span> (!<span class="s">"failed"</span>.equals(existing.get(<span class="s">"status"</span>))) throw retryNotAllowed;</span>
+<span class="ln">  Map&lt;String, Object&gt; retryJob = orderJobFactory.createRetryDeliveryJob(existing);</span>
+<span class="ln">  <span class="k">return</span> enqueueJob(retryJob, failedOrderId);</span>
+<span class="ln">}</span>
+  </pre></div>
+
+  <div class="lines">
+    <div class="lrow"><div class="ltag">Lines 1-3</div><div class="lbody">A normal order becomes a <code>delivery_order</code> job, then the API stores it and publishes it to Redpanda.</div></div>
+    <div class="lrow"><div class="ltag">Lines 6-10</div><div class="lbody">A retry is allowed only when the original order is actually <code>failed</code>. The new job uses <code>force_fail=false</code> and keeps a link back to the failed order.</div></div>
+  </div>
+
+  <h3>4.3 - Worker behavior</h3>
+  <div class="code-header"><span><span class="dot"></span>services/worker/src/worker_service/processor.py</span><span>delivery simulation</span></div>
+  <div class="code"><pre>
+<span class="ln"><span class="k">if</span> payload.get(<span class="s">"force_fail"</span>):</span>
+<span class="ln">    <span class="k">raise</span> RuntimeError(<span class="s">"forced failure requested by payload"</span>)</span>
+<span class="ln"></span>
+<span class="ln"><span class="k">if</span> job.job_type == <span class="s">"delivery_order"</span>:</span>
+<span class="ln">    sleeper(seconds)</span>
+<span class="ln">    <span class="k">return</span> {</span>
+<span class="ln">      <span class="s">"order_status"</span>: <span class="s">"ready_for_dispatch"</span>,</span>
+<span class="ln">      <span class="s">"assigned_rider"</span>: _select_rider(job.job_id),</span>
+<span class="ln">      <span class="s">"processed_steps"</span>: [<span class="s">"payment_verified"</span>, <span class="s">"restaurant_confirmed"</span>, <span class="s">"rider_assigned"</span>]</span>
+<span class="ln">    }</span>
+  </pre></div>
+
+  <p>
+    The forced failure flag is useful in demos: it creates a controlled failed order, then the retry
+    endpoint proves business-level recovery by converting that original order to <code class="inline">recovered</code>.
+  </p>
+</section>
+
+<section id="jenkinsfile">
+  <span class="sec-num">§ 05</span>
+  <h2>The Jenkinsfile - pipeline as code</h2>
+
+  <p>
+    The Jenkinsfile is the automation heart of the project. It turns a GitHub push into a complete
+    delivery workflow: checkout, tests, image build, Docker Hub push, Kubernetes deploy, and rollout
+    verification. It also includes SCM polling so the project still auto-builds even if an ngrok
+    webhook URL changes.
+  </p>
+
+  <h3>5.1 - Trigger and parameters</h3>
+  <div class="code-header"><span><span class="dot"></span>Jenkinsfile</span><span>trigger + config</span></div>
+  <div class="code"><pre>
+<span class="ln">triggers {</span>
+<span class="ln">  githubPush()</span>
+<span class="ln">  pollSCM(<span class="s">'H/2 * * * *'</span>)</span>
+<span class="ln">}</span>
+<span class="ln"></span>
+<span class="ln">parameters {</span>
+<span class="ln">  string(name: <span class="s">'DOCKERHUB_ORG'</span>, defaultValue: <span class="s">'ayush81080'</span>)</span>
+<span class="ln">  string(name: <span class="s">'IMAGE_TAG'</span>, defaultValue: <span class="s">'auto'</span>)</span>
+<span class="ln">  booleanParam(name: <span class="s">'PUSH_IMAGES'</span>, defaultValue: <span class="k">true</span>)</span>
+<span class="ln">  booleanParam(name: <span class="s">'DEPLOY_TO_K8S'</span>, defaultValue: <span class="k">true</span>)</span>
+<span class="ln">}</span>
+  </pre></div>
+
+  <div class="lines">
+    <div class="lrow"><div class="ltag">Trigger</div><div class="lbody"><code>githubPush()</code> handles GitHub webhook events. <code>pollSCM('H/2 * * * *')</code> checks GitHub every few minutes as a backup.</div></div>
+    <div class="lrow"><div class="ltag">Images</div><div class="lbody"><code>IMAGE_TAG=auto</code> resolves to the Git commit SHA, which makes every deployed image traceable to source code.</div></div>
+    <div class="lrow"><div class="ltag">Deploy</div><div class="lbody">The default booleans are true, so a normal push runs the complete build-push-deploy path.</div></div>
+  </div>
+
+  <h3>5.2 - Build and push stages</h3>
+  <div class="code-header"><span><span class="dot"></span>Jenkinsfile</span><span>image stages</span></div>
+  <div class="code"><pre>
+<span class="ln">sh <span class="s">'./scripts/run-python-tests.sh'</span></span>
+<span class="ln">sh <span class="s">'mvn -q -f services/order-api/pom.xml test'</span></span>
+<span class="ln">sh <span class="s">'docker build -f services/order-api/Dockerfile -t "$ORDER_API_IMAGE" .'</span></span>
+<span class="ln">sh <span class="s">'docker build -f services/worker/Dockerfile -t "$WORKER_IMAGE" .'</span></span>
+<span class="ln">sh <span class="s">'docker build -f services/healing-controller/Dockerfile -t "$HEALER_IMAGE" .'</span></span>
+<span class="ln">sh <span class="s">'docker push "$ORDER_API_IMAGE"'</span></span>
+<span class="ln">sh <span class="s">'docker push "$WORKER_IMAGE"'</span></span>
+<span class="ln">sh <span class="s">'docker push "$HEALER_IMAGE"'</span></span>
+  </pre></div>
+
+  <p>
+    Tests gate the build. Only after Python and Spring Boot tests pass does Jenkins create and push
+    the three service images.
+  </p>
+
+  <h3>5.3 - Kubernetes deploy stage</h3>
+  <div class="code-header"><span><span class="dot"></span>Jenkinsfile</span><span>rollout verification</span></div>
+  <div class="code"><pre>
+<span class="ln">sh <span class="s">'kubectl -n "$K8S_NAMESPACE" delete job redpanda-topic-init --ignore-not-found=true || true'</span></span>
+<span class="ln">sh <span class="s">'kubectl apply -k k8s/base'</span></span>
+<span class="ln">sh <span class="s">'kubectl -n "$K8S_NAMESPACE" wait --for=condition=complete job/redpanda-topic-init'</span></span>
+<span class="ln">sh <span class="s">'kubectl -n "$K8S_NAMESPACE" set image deployment/order-api order-api="$ORDER_API_IMAGE"'</span></span>
+<span class="ln">sh <span class="s">'kubectl -n "$K8S_NAMESPACE" set image deployment/job-worker worker="$WORKER_IMAGE"'</span></span>
+<span class="ln">sh <span class="s">'kubectl -n "$K8S_NAMESPACE" set image deployment/healing-controller healing-controller="$HEALER_IMAGE"'</span></span>
+<span class="ln">sh <span class="s">'kubectl -n "$K8S_NAMESPACE" rollout status deployment/order-api --timeout=240s'</span></span>
+  </pre></div>
+
+  <div class="callout warn">
+    <div class="ctitle">Important Jenkins fix</div>
+    Kubernetes Job pod templates are immutable. The pipeline deletes the old
+    <code class="inline">redpanda-topic-init</code> job before applying manifests so repeated deployments
+    do not fail with a "field is immutable" error.
+  </div>
+</section>
+
+<section id="docker">
+  <span class="sec-num">§ 06</span>
+  <h2>Dockerfiles and Docker Compose</h2>
+
+  <p>
+    Docker packages the services so Jenkins and Kubernetes can run the same artifacts. Compose is
+    used for local integration testing and for bringing up supporting tools such as ELK and Vault.
+  </p>
+
+  <h3>6.1 - Order API Dockerfile</h3>
+  <div class="code-header"><span><span class="dot"></span>services/order-api/Dockerfile</span><span>multi-stage Java image</span></div>
+  <div class="code"><pre>
+<span class="ln"><span class="k">FROM</span> maven:3.9.9-eclipse-temurin-21 <span class="k">AS</span> build</span>
+<span class="ln"><span class="k">COPY</span> services/order-api/pom.xml .</span>
+<span class="ln"><span class="k">RUN</span> mvn -q -DskipTests dependency:go-offline</span>
+<span class="ln"><span class="k">COPY</span> services/order-api/src ./src</span>
+<span class="ln"><span class="k">RUN</span> mvn -q -DskipTests package</span>
+<span class="ln"><span class="k">FROM</span> eclipse-temurin:21-jre</span>
+<span class="ln"><span class="k">COPY</span> --from=build /workspace/target/order-api-0.1.0.jar /app/order-api.jar</span>
+<span class="ln"><span class="k">ENTRYPOINT</span> [<span class="s">"java"</span>, <span class="s">"-jar"</span>, <span class="s">"/app/order-api.jar"</span>]</span>
+  </pre></div>
+
+  <p>
+    The first stage builds the Spring Boot JAR. The second stage keeps only a Java runtime and the
+    packaged application, which makes the runtime image cleaner.
+  </p>
+
+  <h3>6.2 - Compose modes</h3>
+  <table class="table">
+    <thead>
+      <tr><th>File</th><th>Purpose</th><th>Services</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code class="inline">docker-compose.demo.yml</code></td><td>Fast demo mode</td><td>Redpanda, topic init, Redis, API, worker, healing controller</td></tr>
+      <tr><td><code class="inline">docker-compose.yml</code></td><td>Full local stack</td><td>Demo stack plus Elasticsearch, Logstash, Kibana, Vault</td></tr>
+      <tr><td><code class="inline">docker-compose.jenkins.yml</code></td><td>CI controller</td><td>Custom Jenkins with Docker socket and kubeconfig mount</td></tr>
+    </tbody>
+  </table>
+
+  <div class="code-header"><span><span class="dot"></span>Local demo</span><span>run command</span></div>
+  <div class="code"><pre>
+<span class="ln">docker compose -p chaos-demo -f docker-compose.demo.yml up -d --scale worker=3</span>
+<span class="ln">curl http://localhost:8000/metrics</span>
+<span class="ln">python3 tools/load-generator/load_generator.py --url http://localhost:8000 --jobs 30 --concurrency 5</span>
+  </pre></div>
+</section>
+
+<section id="kubernetes">
+  <span class="sec-num">§ 07</span>
+  <h2>Kubernetes manifests</h2>
+
+  <p>
+    Kubernetes runs the system as a cluster application. The important resources are Deployments
+    for long-running services, Services for stable networking, HPA for scaling, RBAC for the
+    healing controller, PDBs for availability, and a Job to initialize the Redpanda topic.
+  </p>
+
+  <h3>7.1 - Order API deployment</h3>
+  <div class="code-header"><span><span class="dot"></span>k8s/base/order-api.yaml</span><span>zero-downtime API rollout</span></div>
+  <div class="code"><pre>
+<span class="ln">replicas: <span class="n">2</span></span>
+<span class="ln">strategy:</span>
+<span class="ln">  rollingUpdate:</span>
+<span class="ln">    maxUnavailable: <span class="n">0</span></span>
+<span class="ln">    maxSurge: <span class="n">1</span></span>
+<span class="ln">readinessProbe:</span>
+<span class="ln">  httpGet: { path: <span class="s">/readyz</span>, port: http }</span>
+<span class="ln">livenessProbe:</span>
+<span class="ln">  httpGet: { path: <span class="s">/healthz</span>, port: http }</span>
+  </pre></div>
+
+  <div class="lines">
+    <div class="lrow"><div class="ltag">Replicas</div><div class="lbody">Two API pods keep the service available during updates.</div></div>
+    <div class="lrow"><div class="ltag">Rolling</div><div class="lbody"><code>maxUnavailable: 0</code> means Kubernetes should not intentionally take the API below available capacity during rollout.</div></div>
+    <div class="lrow"><div class="ltag">Probes</div><div class="lbody">Readiness protects traffic. Liveness protects recovery by restarting unhealthy containers.</div></div>
+  </div>
+
+  <h3>7.2 - Worker and HPA</h3>
+  <div class="code-header"><span><span class="dot"></span>k8s/base/hpa.yaml</span><span>autoscaling</span></div>
+  <div class="code"><pre>
+<span class="ln">kind: HorizontalPodAutoscaler</span>
+<span class="ln">metadata:</span>
+<span class="ln">  name: job-worker-hpa</span>
+<span class="ln">spec:</span>
+<span class="ln">  minReplicas: <span class="n">1</span></span>
+<span class="ln">  maxReplicas: <span class="n">8</span></span>
+<span class="ln">  metrics:</span>
+<span class="ln">    - resource:</span>
+<span class="ln">        name: cpu</span>
+<span class="ln">        target: { type: Utilization, averageUtilization: <span class="n">60</span> }</span>
+  </pre></div>
+
+  <p>
+    HPA reacts to CPU pressure. The custom healing controller reacts to application pressure
+    such as queue backlog and failed orders. Together, they cover infrastructure load and
+    business-level symptoms.
+  </p>
+
+  <h3>7.3 - Redpanda topic init job</h3>
+  <div class="code-header"><span><span class="dot"></span>k8s/base/redpanda-topic-job.yaml</span><span>queue bootstrap</span></div>
+  <div class="code"><pre>
+<span class="ln">brokers=<span class="s">"redpanda.job-platform.svc.cluster.local:9092"</span></span>
+<span class="ln">until rpk cluster info -X brokers=<span class="s">"$brokers"</span> &gt;/dev/null 2&gt;&amp;1; do sleep 1; done</span>
+<span class="ln">partitions=<span class="s">"$(rpk topic describe jobs ... | awk '/PARTITIONS/ {print $2}' || true)"</span></span>
+<span class="ln"><span class="k">if</span> [ -z <span class="s">"$partitions"</span> ]; then rpk topic create jobs -p <span class="n">6</span> -r <span class="n">1</span>; fi</span>
+  </pre></div>
+
+  <p>
+    The <code class="inline">jobs</code> topic is created with six partitions so multiple worker replicas
+    can process messages concurrently. Without multiple partitions, scaling workers would look good
+    on paper but would not produce meaningful parallel queue consumption.
+  </p>
+</section>
+
+<section id="ansible">
+  <span class="sec-num">§ 08</span>
+  <h2>Ansible roles</h2>
+
+  <p>
+    Ansible gives the project a modular deployment automation layer. Jenkins is the CI/CD engine,
+    but Ansible describes deployment responsibilities as reusable roles.
+  </p>
+
+  <div class="filelist">
+<span class="file">ansible/site.yml</span>                         <span class="desc"># calls all roles in order</span>
+<span class="dir">ansible/roles/k8s-role/tasks/</span>             <span class="desc"># applies base Kubernetes infrastructure</span>
+<span class="dir">ansible/roles/app-role/tasks/</span>             <span class="desc"># sets app images and waits for rollouts</span>
+<span class="dir">ansible/roles/monitoring-role/tasks/</span>      <span class="desc"># applies ELK and Filebeat manifests</span>
+<span class="dir">ansible/roles/vault-role/tasks/</span>           <span class="desc"># verifies Vault policy files and prints setup command</span>
+  </div>
+
+  <h3>8.1 - Playbook entry point</h3>
+  <div class="code-header"><span><span class="dot"></span>ansible/site.yml</span><span>role sequence</span></div>
+  <div class="code"><pre>
+<span class="ln">- name: Deploy automated chaos testing platform</span>
+<span class="ln">  hosts: localhost</span>
+<span class="ln">  gather_facts: false</span>
+<span class="ln">  roles:</span>
+<span class="ln">    - k8s-role</span>
+<span class="ln">    - app-role</span>
+<span class="ln">    - monitoring-role</span>
+<span class="ln">    - vault-role</span>
+  </pre></div>
+
+  <p>
+    In a viva, this is how to explain it: Ansible is used for repeatable operations. Instead of
+    manually typing every deployment command, roles organize the cluster setup, application rollout,
+    monitoring setup, and Vault verification.
+  </p>
+</section>
+
+<section id="observability">
+  <span class="sec-num">§ 09</span>
+  <h2>ELK observability</h2>
+
+  <p>
+    The application emits structured JSON logs. ELK collects those logs and makes them searchable.
+    In Docker Compose, services use the GELF logging driver to Logstash. In Kubernetes, Filebeat
+    collects container logs and forwards them to Logstash.
+  </p>
+
+  <h3>9.1 - Logstash pipeline</h3>
+  <div class="code-header"><span><span class="dot"></span>observability/logstash/pipeline/logstash.conf</span><span>structured log parsing</span></div>
+  <div class="code"><pre>
+<span class="ln">input {</span>
+<span class="ln">  gelf { port =&gt; <span class="n">12201</span> }</span>
+<span class="ln">  tcp  { port =&gt; <span class="n">5000</span> codec =&gt; json_lines }</span>
+<span class="ln">}</span>
+<span class="ln">filter {</span>
+<span class="ln">  if [message] =~ <span class="s">"^{.*}$"</span> { json { source =&gt; <span class="s">"message"</span> target =&gt; <span class="s">"app"</span> } }</span>
+<span class="ln">  mutate { add_field =&gt; { <span class="s">"project"</span> =&gt; <span class="s">"automated-chaos-testing-self-healing-microservices-platform"</span> } }</span>
+<span class="ln">}</span>
+<span class="ln">output { elasticsearch { index =&gt; <span class="s">"job-platform-logs-%{+YYYY.MM.dd}"</span> } }</span>
+  </pre></div>
+
+  <table class="table">
+    <thead>
+      <tr><th>Event</th><th>Where it comes from</th><th>Why it matters</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code class="inline">order_submitted</code></td><td>Order API</td><td>Proves API accepted and queued a delivery order.</td></tr>
+      <tr><td><code class="inline">job_processing_completed</code></td><td>Worker</td><td>Proves a worker consumed and completed the job.</td></tr>
+      <tr><td><code class="inline">order_retry_submitted</code></td><td>Order API</td><td>Proves failed business work was resubmitted.</td></tr>
+      <tr><td><code class="inline">healing_action_selected</code></td><td>Healing controller</td><td>Proves the controller made a scale or restart decision.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout warn">
+    <div class="ctitle">Local laptop note</div>
+    ELK is memory-heavy. If Docker Desktop has less than about 6 GB memory available, the core
+    platform can run fine while Kibana/Logstash may become unstable. For a safe demo, run ELK
+    only after increasing Docker memory or use the prepared report screenshots.
+  </div>
+</section>
+
+<section id="security">
+  <span class="sec-num">§ 10</span>
+  <h2>Vault and security</h2>
+
+  <p>
+    The project demonstrates secret management with Vault. The Kubernetes manifests contain Vault
+    Agent annotations that describe which secret path should be injected into pods.
+  </p>
+
+  <div class="code-header"><span><span class="dot"></span>Vault annotations in K8s deployments</span><span>runtime secrets</span></div>
+  <div class="code"><pre>
+<span class="ln">vault.hashicorp.com/agent-inject: <span class="s">"true"</span></span>
+<span class="ln">vault.hashicorp.com/role: job-platform</span>
+<span class="ln">vault.hashicorp.com/agent-inject-secret-platform.env: secret/data/job-platform</span>
+<span class="ln">vault.hashicorp.com/agent-inject-template-platform.env: |</span>
+<span class="ln">  API_TOKEN={{ .Data.data.api_token }}</span>
+<span class="ln">  REDIS_PASSWORD={{ .Data.data.redis_password }}</span>
+  </pre></div>
+
+  <div class="lines">
+    <div class="lrow"><div class="ltag">Secret</div><div class="lbody"><code>secret/data/job-platform</code> is the Vault KV path used by the platform.</div></div>
+    <div class="lrow"><div class="ltag">Policy</div><div class="lbody"><code>vault/policies/job-platform.hcl</code> gives read access only to the project secret path.</div></div>
+    <div class="lrow"><div class="ltag">Bootstrap</div><div class="lbody"><code>vault/scripts/bootstrap-vault.sh</code> writes demo secrets and configures the Kubernetes auth role.</div></div>
+  </div>
+</section>
+
+<section id="chaos">
+  <span class="sec-num">§ 11</span>
+  <h2>Chaos and self-healing</h2>
+
+  <p>
+    Chaos engineering intentionally breaks part of the system to prove that recovery works.
+    This repo includes LitmusChaos experiments for pod deletion, CPU stress, and network latency.
+    It also supports manual chaos with a simple worker pod delete command.
+  </p>
+
+  <h3>11.1 - Healing policy</h3>
+  <div class="code-header"><span><span class="dot"></span>services/healing-controller/src/healing_controller/policy.py</span><span>decision rules</span></div>
+  <div class="code"><pre>
+<span class="ln"><span class="k">if</span> snapshot.backlog &gt; config.queued_threshold:</span>
+<span class="ln">    actions.append(HealingAction(action=<span class="s">"scale"</span>, target_replicas=target))</span>
+<span class="ln"></span>
+<span class="ln"><span class="k">if</span> snapshot.failed &gt;= config.failed_threshold:</span>
+<span class="ln">    actions.append(HealingAction(action=<span class="s">"restart"</span>))</span>
+<span class="ln"></span>
+<span class="ln"><span class="k">if</span> snapshot.backlog == <span class="n">0</span> and snapshot.current_replicas &gt; config.min_replicas:</span>
+<span class="ln">    actions.append(HealingAction(action=<span class="s">"scale"</span>, target_replicas=config.min_replicas))</span>
+  </pre></div>
+
+  <table class="table">
+    <thead>
+      <tr><th>Problem</th><th>Signal</th><th>Recovery action</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>High queue pressure</td><td>Queued + running orders above threshold</td><td>Scale worker deployment upward</td></tr>
+      <tr><td>Repeated failures</td><td>Failed orders reach threshold</td><td>Restart worker deployment</td></tr>
+      <tr><td>Backlog gone</td><td>Queued + running returns to zero</td><td>Scale workers back to minimum</td></tr>
+      <tr><td>Worker pod deleted</td><td>Deployment has fewer pods than desired</td><td>Kubernetes recreates replacement pod</td></tr>
+    </tbody>
+  </table>
+
+  <h3>11.2 - Manual chaos proof</h3>
+  <div class="code-header"><span><span class="dot"></span>Worker pod delete</span><span>demo command</span></div>
+  <div class="code"><pre>
+<span class="ln">kubectl -n job-platform get pods -l app=job-worker</span>
+<span class="ln">kubectl -n job-platform delete pod &lt;worker-pod-name&gt;</span>
+<span class="ln">kubectl -n job-platform wait --for=condition=Ready pod -l app=job-worker --timeout=180s</span>
+<span class="ln">kubectl -n job-platform get deploy job-worker</span>
+  </pre></div>
+</section>
+
+<section id="demo">
+  <span class="sec-num">§ 12</span>
+  <h2>Demo runbook</h2>
+
+  <p>
+    This is the clean project demonstration sequence. It shows the whole story: source control,
+    Jenkins, Docker Hub, Kubernetes deployment, application usage, retry recovery, and chaos.
+  </p>
+
+  <h3>12.1 - Start everything from scratch</h3>
+  <div class="code-header"><span><span class="dot"></span>Fresh deployment</span><span>commands</span></div>
+  <div class="code"><pre>
+<span class="ln">kind delete cluster --name chaos-platform 2&gt;/dev/null || true</span>
+<span class="ln">kind create cluster --name chaos-platform</span>
+<span class="ln">./scripts/start-jenkins.sh</span>
+<span class="ln">git push</span>
+<span class="ln"><span class="c"># Jenkins auto-triggers, builds images, pushes Docker Hub, deploys Kubernetes</span></span>
+<span class="ln">kubectl -n job-platform get deploy,pod,svc,hpa,job</span>
+<span class="ln">kubectl -n job-platform port-forward svc/order-api 18000:8000</span>
+  </pre></div>
+
+  <h3>12.2 - Open demo surfaces</h3>
+  <table class="table">
+    <thead>
+      <tr><th>Surface</th><th>URL</th><th>What to show</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Dashboard</td><td><code class="inline">http://localhost:18000/dashboard.html</code></td><td>Health tiles, metrics, order form, recent orders, retry button</td></tr>
+      <tr><td>Swagger</td><td><code class="inline">http://localhost:18000/docs</code></td><td>REST endpoints for orders, retry, health, readiness, metrics</td></tr>
+      <tr><td>Jenkins</td><td><code class="inline">http://localhost:8080</code></td><td>Successful pipeline stages and GitHub trigger</td></tr>
+      <tr><td>Vault</td><td><code class="inline">http://localhost:8200</code></td><td>Secret path <code class="inline">secret/data/job-platform</code></td></tr>
+      <tr><td>Kibana</td><td><code class="inline">http://localhost:5601</code></td><td>Log events, if ELK is deployed</td></tr>
+    </tbody>
+  </table>
+
+  <h3>12.3 - Verify normal order and retry recovery</h3>
+  <div class="code-header"><span><span class="dot"></span>API proof</span><span>curl commands</span></div>
+  <div class="code"><pre>
+<span class="ln">curl -X POST http://localhost:18000/orders \</span>
+<span class="ln">  -H <span class="s">"Content-Type: application/json"</span> \</span>
+<span class="ln">  -d <span class="s">'{"customerName":"Ayush","restaurantName":"Campus Canteen","pickupAddress":"Block A","deliveryAddress":"Hostel Gate","items":["Paneer Roll","Cold Coffee"],"priority":5,"estimatedDistanceKm":2.5,"simulateSeconds":2}'</span></span>
+<span class="ln"></span>
+<span class="ln">curl -X POST http://localhost:18000/orders \</span>
+<span class="ln">  -H <span class="s">"Content-Type: application/json"</span> \</span>
+<span class="ln">  -d <span class="s">'{"customerName":"Recovery Demo","restaurantName":"Retry Bistro","pickupAddress":"Block C","deliveryAddress":"Systems Lab","items":["Noodles","Shake"],"priority":8,"estimatedDistanceKm":3.1,"simulateSeconds":1,"forceFail":true}'</span></span>
+<span class="ln"></span>
+<span class="ln">curl -X POST http://localhost:18000/orders/&lt;failed-order-id&gt;/retry</span>
+<span class="ln">curl http://localhost:18000/metrics</span>
+  </pre></div>
+
+  <div class="callout">
+    <div class="ctitle">Expected final metrics</div>
+    After one normal order and one failed-then-retried order, a clean demo state should show
+    <code class="inline">completed=2</code>, <code class="inline">failed=0</code>,
+    <code class="inline">recovered=1</code>, and <code class="inline">backlog=0</code>.
+  </div>
+</section>
+
+<section id="summary">
+  <span class="sec-num">§ 13</span>
+  <h2>Putting it all together</h2>
+
+  <p>
+    This project is not just a delivery order app. It is a complete DevOps reliability platform:
+    the app creates real work, Jenkins automates delivery, Docker packages services, Kubernetes
+    orchestrates them, Redpanda and Redis provide queue/state infrastructure, ELK observes behavior,
+    Vault demonstrates secret handling, Ansible organizes operations, and chaos experiments prove
+    recovery.
+  </p>
+
+  <h3>What to say in a viva or demo</h3>
+  <div class="callout">
+    <div class="ctitle">One-minute explanation</div>
+    "Our project is a delivery microservices platform. Customers submit orders through a Spring Boot
+    API. The API stores order state in Redis and publishes work to Redpanda. Python workers consume
+    the queue and update order status. Jenkins automatically tests, builds, pushes Docker images, and
+    deploys to Kubernetes. Kubernetes handles pod recovery and autoscaling, while our custom healing
+    controller reacts to application-level backlog and failures. ELK gives logging, Vault gives secret
+    management, Ansible gives modular deployment automation, and chaos experiments prove that the
+    system can recover."
+  </div>
+
+  <table class="table">
+    <thead>
+      <tr><th>Requirement</th><th>Implemented by</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>CI/CD</td><td>GitHub webhook / SCM polling, Jenkinsfile, Docker Hub push, Kubernetes deploy</td></tr>
+      <tr><td>Containerization</td><td>Dockerfiles for Order API, worker, healing controller; Compose stacks</td></tr>
+      <tr><td>Kubernetes</td><td>Deployments, Services, ConfigMap, RBAC, PDB, HPA, rolling updates</td></tr>
+      <tr><td>Self-healing</td><td>Kubernetes pod recreation, HPA, custom healing controller, retry recovery</td></tr>
+      <tr><td>Observability</td><td>Structured JSON logs, Logstash, Elasticsearch, Kibana, Filebeat</td></tr>
+      <tr><td>Security</td><td>Vault policy, Vault Agent annotations, injected runtime secrets</td></tr>
+      <tr><td>Automation</td><td>Ansible roles and Jenkins pipeline</td></tr>
+      <tr><td>Chaos</td><td>LitmusChaos pod delete, CPU stress, network delay; manual pod-delete proof</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<footer>
+  <div class="sig">Automated Chaos Testing and Self-Healing Microservices Platform</div>
+  Walkthrough generated for the project repository. Keep this HTML beside the report as a presentation and viva companion.
+</footer>
+
+</div>
+</body>
+</html>
