@@ -3,7 +3,7 @@ NAMESPACE ?= job-platform
 DOCKERHUB_ORG ?= your-dockerhub-username
 IMAGE_TAG ?= dev
 
-.PHONY: test compose-up compose-down observability-up observability-down build k8s-apply k8s-status load chaos-pod-delete rolling-update
+.PHONY: test compose-up compose-down observability-up observability-down build k8s-apply k8s-status load litmus-install litmus-pod-delete chaos-pod-delete rolling-update
 
 test:
 	./scripts/run-python-tests.sh
@@ -34,6 +34,12 @@ k8s-status:
 
 load:
 	python3 tools/load-generator/load_generator.py --jobs 50 --concurrency 10 --url http://localhost:8000
+
+litmus-install:
+	./scripts/install-litmus.sh
+
+litmus-pod-delete:
+	./scripts/run-litmus-pod-delete.sh
 
 chaos-pod-delete:
 	kubectl apply -f chaos/experiments/pod-delete-worker.yaml

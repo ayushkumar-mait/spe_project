@@ -3,13 +3,20 @@
 Install LitmusChaos first:
 
 ```bash
-kubectl apply -f https://litmuschaos.github.io/litmus/litmus-operator-v3.0.0.yaml
+./scripts/install-litmus.sh
 ```
 
-Then install the experiment definitions from the Litmus hub for `pod-delete`,
-`pod-cpu-hog`, and `pod-network-latency`, or use the Litmus portal to select the
-same experiments. The YAML files in `chaos/experiments` create ChaosEngine
-resources that target the `job-worker` pods.
+The installer applies the Litmus operator, creates the `litmus-admin` service
+account in the `job-platform` namespace, and installs the `pod-delete`,
+`pod-cpu-hog`, and `pod-network-latency` ChaosExperiment resources used by this
+project. The YAML files in `chaos/experiments` create ChaosEngine resources that
+target the `job-worker` pods.
+
+Run the reliable viva/demo pod-delete experiment:
+
+```bash
+./scripts/run-litmus-pod-delete.sh
+```
 
 Useful checks during a chaos run:
 
@@ -19,4 +26,3 @@ kubectl -n job-platform get hpa
 kubectl -n job-platform logs deploy/healing-controller -f
 curl http://localhost:8000/metrics
 ```
-
