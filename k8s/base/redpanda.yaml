@@ -38,6 +38,28 @@ spec:
           ports:
             - containerPort: 9092
               name: kafka
+          startupProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - rpk cluster info -X brokers=localhost:9092 >/dev/null 2>&1
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 60
+          readinessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - rpk cluster info -X brokers=localhost:9092 >/dev/null 2>&1
+            periodSeconds: 10
+            failureThreshold: 6
+          livenessProbe:
+            tcpSocket:
+              port: kafka
+            initialDelaySeconds: 30
+            periodSeconds: 20
           resources:
             requests:
               cpu: 100m
@@ -58,4 +80,3 @@ spec:
     - name: kafka
       port: 9092
       targetPort: kafka
-

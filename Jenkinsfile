@@ -75,19 +75,7 @@ pipeline {
         expression { return params.DEPLOY_TO_K8S }
       }
       steps {
-        sh 'kubectl get namespace "$K8S_NAMESPACE" >/dev/null 2>&1 && kubectl -n "$K8S_NAMESPACE" delete job redpanda-topic-init --ignore-not-found=true || true'
-        sh 'kubectl -n "$K8S_NAMESPACE" wait --for=delete job/redpanda-topic-init --timeout=60s || true'
-        sh 'kubectl apply -k k8s/base'
-        sh 'kubectl -n "$K8S_NAMESPACE" set image deployment/order-api order-api="$ORDER_API_IMAGE"'
-        sh 'kubectl -n "$K8S_NAMESPACE" set image deployment/job-worker worker="$WORKER_IMAGE"'
-        sh 'kubectl -n "$K8S_NAMESPACE" set image deployment/healing-controller healing-controller="$HEALER_IMAGE"'
-        sh 'kubectl -n "$K8S_NAMESPACE" rollout status deployment/redis --timeout=180s'
-        sh 'kubectl -n "$K8S_NAMESPACE" rollout status deployment/redpanda --timeout=180s'
-        sh 'kubectl -n "$K8S_NAMESPACE" wait --for=condition=complete job/redpanda-topic-init --timeout=420s'
-        sh 'kubectl -n "$K8S_NAMESPACE" rollout restart deployment/job-worker'
-        sh 'kubectl -n "$K8S_NAMESPACE" rollout status deployment/order-api --timeout=240s'
-        sh 'kubectl -n "$K8S_NAMESPACE" rollout status deployment/job-worker --timeout=240s'
-        sh 'kubectl -n "$K8S_NAMESPACE" rollout status deployment/healing-controller --timeout=240s'
+        sh './scripts/jenkins-deploy-k8s.sh'
       }
     }
   }

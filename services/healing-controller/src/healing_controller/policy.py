@@ -31,7 +31,11 @@ class HealingAction:
     target_replicas: int | None = None
 
 
-def decide_actions(snapshot: SystemSnapshot, config: HealingConfig) -> list[HealingAction]:
+def decide_actions(
+    snapshot: SystemSnapshot,
+    config: HealingConfig,
+    last_restart_failed_count: int | None = None,
+) -> list[HealingAction]:
     actions: list[HealingAction] = []
 
     if snapshot.backlog > config.queued_threshold:
@@ -49,7 +53,11 @@ def decide_actions(snapshot: SystemSnapshot, config: HealingConfig) -> list[Heal
                 )
             )
 
-    if snapshot.failed >= config.failed_threshold:
+    should_restart = snapshot.failed >= config.failed_threshold
+    if last_restart_failed_count is not None:
+        should_restart = should_restart and snapshot.failed > last_restart_failed_count
+
+    if should_restart:
         actions.append(
             HealingAction(
                 action="restart",
@@ -67,4 +75,3 @@ def decide_actions(snapshot: SystemSnapshot, config: HealingConfig) -> list[Heal
         )
 
     return actions
-

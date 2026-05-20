@@ -21,6 +21,7 @@ def main() -> None:
     deployment = os.getenv("WORKER_DEPLOYMENT", "job-worker")
     interval = int(os.getenv("HEALING_INTERVAL_SECONDS", "15"))
     dry_run = os.getenv("HEALING_DRY_RUN", "false").lower() == "true"
+    restart_cooldown_seconds = int(os.getenv("HEALING_RESTART_COOLDOWN_SECONDS", "300"))
     healing_config = HealingConfig(
         queued_threshold=int(os.getenv("HEALING_QUEUED_THRESHOLD", "10")),
         failed_threshold=int(os.getenv("HEALING_FAILED_THRESHOLD", "5")),
@@ -31,6 +32,8 @@ def main() -> None:
 
     apps_api = None if dry_run else _load_apps_api(logger)
     logger.info("healing_controller_started", extra={"event": "startup", "dry_run": dry_run})
+    last_restart_failed_count: int | None = None
+    last_restart_time = 0.0
 
     while True:
         metrics = repo.metrics()
@@ -44,14 +47,35 @@ def main() -> None:
             failed=metrics.failed,
             current_replicas=current_replicas,
         )
-        actions = decide_actions(snapshot, healing_config)
+        if snapshot.failed < healing_config.failed_threshold:
+            last_restart_failed_count = None
+
+        actions = decide_actions(snapshot, healing_config, last_restart_failed_count=last_restart_failed_count)
         for action in actions:
+            if action.action == "restart":
+                now = time.monotonic()
+                if now - last_restart_time < restart_cooldown_seconds:
+                    logger.info(
+                        "healing_action_suppressed",
+                        extra={
+                            "event": "healing_action_suppressed",
+                            "action": action.action,
+                            "reason": "restart cooldown active",
+                            "failed": snapshot.failed,
+                            "cooldown_seconds": restart_cooldown_seconds,
+                        },
+                    )
+                    continue
+
             logger.warning(
                 "healing_action_selected",
                 extra={"event": "healing_action_selected", "action": action.action, "reason": action.reason},
             )
             if not dry_run and apps_api is not None:
                 _apply_action(apps_api, namespace, deployment, action, logger)
+            if action.action == "restart":
+                last_restart_failed_count = snapshot.failed
+                last_restart_time = time.monotonic()
         time.sleep(interval)
 
 
@@ -113,4 +137,3 @@ def _apply_action(
 
 if __name__ == "__main__":
     main()
-

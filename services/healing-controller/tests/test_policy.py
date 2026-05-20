@@ -20,6 +20,26 @@ def test_restarts_workers_when_failures_cross_threshold():
     assert any(action.action == "restart" for action in actions)
 
 
+def test_does_not_restart_again_for_same_failure_count():
+    actions = decide_actions(
+        SystemSnapshot(queued=0, running=0, failed=6, current_replicas=1),
+        HealingConfig(failed_threshold=5),
+        last_restart_failed_count=6,
+    )
+
+    assert not any(action.action == "restart" for action in actions)
+
+
+def test_restarts_again_when_failure_count_increases():
+    actions = decide_actions(
+        SystemSnapshot(queued=0, running=0, failed=7, current_replicas=1),
+        HealingConfig(failed_threshold=5),
+        last_restart_failed_count=6,
+    )
+
+    assert any(action.action == "restart" for action in actions)
+
+
 def test_scales_down_after_backlog_clears():
     actions = decide_actions(
         SystemSnapshot(queued=0, running=0, failed=0, current_replicas=4),
@@ -30,4 +50,3 @@ def test_scales_down_after_backlog_clears():
         actions[0],
     ]
     assert actions[0].target_replicas == 1
-
